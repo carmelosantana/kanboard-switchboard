@@ -129,6 +129,8 @@ class Registry extends Base
             !$this->nonEmptyString($descriptor['title'] ?? null) => 'missing title',
             !in_array($descriptor['risk'], ['read', 'reversible', 'consequential'], true) => 'invalid risk',
             !$this->validTarget($descriptor['target'] ?? null, $id) => 'invalid target',
+            $descriptor['target']['kind'] !== 'handler'
+                && ($descriptor['risk'] === 'consequential' || $descriptor['step_up']) => 'invalid risk',
             !$this->validInput($descriptor['input']) => 'invalid input schema',
             default => null,
         };
@@ -178,15 +180,19 @@ class Registry extends Base
     private function validProperty(mixed $property): bool
     {
         if (!is_array($property) || ($property['type'] ?? null) !== 'string'
-            || array_diff_key($property, ['type' => true, 'maxLength' => true, 'enum' => true, 'format' => true])) {
+            || array_diff_key($property, [
+                'type' => true, 'title' => true, 'maxLength' => true, 'enum' => true, 'format' => true,
+            ])) {
             return false;
         }
 
+        $title = $property['title'] ?? null;
         $maxLength = $property['maxLength'] ?? 500;
         $enum = $property['enum'] ?? null;
         $format = $property['format'] ?? null;
 
-        return (!array_key_exists('maxLength', $property) || (is_int($property['maxLength']) && $maxLength >= 0))
+        return (!array_key_exists('title', $property) || ($this->nonEmptyString($title) && mb_strlen($title, 'UTF-8') <= 80))
+            && (!array_key_exists('maxLength', $property) || (is_int($property['maxLength']) && $maxLength >= 0))
             && (!array_key_exists('enum', $property)
                 || (is_array($enum) && array_is_list($enum) && $enum !== []
                     && array_all($enum, static fn($value): bool => is_string($value))))

@@ -74,6 +74,55 @@ final class RegistryTest extends TestCase
         ], $logged->getArrayCopy());
     }
 
+    public function testOnlyHandlersCanRequireConfirmationOrStepUp(): void
+    {
+        $route = ['controller' => 'BoardViewController', 'action' => 'show'];
+        $handler = $this->command('acme.handler', ['risk' => 'consequential', 'step_up' => true]);
+        $this->listen([
+            $this->command('acme.x', ['risk' => 'consequential', 'target' => ['kind' => 'post'] + $route]),
+            $this->command('acme.y', ['step_up' => true, 'target' => ['kind' => 'route'] + $route]),
+            $handler,
+        ]);
+        $logged = $this->recordWarnings(2);
+
+        $commands = (new Registry($this->container))->all(self::CONTEXT);
+
+        $this->assertSame(['acme.handler'], array_column($commands, 'id'));
+        $this->assertSame('consequential', $commands[0]['risk']);
+        $this->assertTrue($commands[0]['step_up']);
+        $this->assertSame([
+            'Switchboard: skipped command "acme.x" (invalid risk)',
+            'Switchboard: skipped command "acme.y" (invalid risk)',
+        ], $logged->getArrayCopy());
+    }
+
+    public function testInputPropertyTitlesMustBeNonEmptyStringsOfAtMost80Characters(): void
+    {
+        $title = str_repeat('é', 80);
+        $input = static fn(mixed $title): array => [
+            'type' => 'object',
+            'properties' => ['name' => ['type' => 'string', 'title' => $title]],
+        ];
+        $this->listen([
+            $this->command('acme.valid', ['input' => $input($title)]),
+            $this->command('acme.number', ['input' => $input(5)]),
+            $this->command('acme.empty', ['input' => $input('')]),
+            $this->command('acme.long', ['input' => $input($title . 'é')]),
+        ]);
+        $logged = $this->recordWarnings(3);
+        $registry = new Registry($this->container);
+
+        $commands = $registry->all(self::CONTEXT);
+
+        $this->assertSame(['acme.valid'], array_column($commands, 'id'));
+        $this->assertSame($input($title), $registry->toClient($commands[0])['input']);
+        $this->assertSame([
+            'Switchboard: skipped command "acme.number" (invalid input schema)',
+            'Switchboard: skipped command "acme.empty" (invalid input schema)',
+            'Switchboard: skipped command "acme.long" (invalid input schema)',
+        ], $logged->getArrayCopy());
+    }
+
     public function testBrokenListenersAreLoggedAndOtherListenersSurvive(): void
     {
         $this->container['hook']->on('switchboard:commands', static fn() => throw new RuntimeException('private'));
