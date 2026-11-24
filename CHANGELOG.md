@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1 — unreleased
+
+- A command that ran is no longer reported as failed when recording it in recents fails; the error is logged.
+- `%`, `_` and `!` in task, project and user search terms match literally.
+- Command and provider ids follow one rule (`CommandId`), capped at 191 characters, the recents key length.
+- Core command titles are translated.
+- Toasts fill one `role="status"` region the layout renders empty, so screen readers announce them.
+- Command and search rows share one accessible-name order: title, group, then hints.
+
 ## 1.0.0 — 2026-11-24
 
 - Command palette on Ctrl/⌘+K (and Ctrl/⌘+Shift+K in editors), with `/` to focus page search and a header button.
