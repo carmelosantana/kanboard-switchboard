@@ -63,8 +63,13 @@ final class ApiControllerTest extends Base
         [$status, $body] = $this->call('commands');
 
         $this->assertSame(200, $status);
-        $this->assertSame(['example.visible'], array_column($body['commands'], 'id'));
-        $this->assertSame(['kind' => 'handler'], $body['commands'][0]['target']);
+        $exampleIds = array_filter(
+            array_column($body['commands'], 'id'),
+            static fn(string $id): bool => !str_starts_with($id, 'switchboard.core.')
+        );
+        $this->assertSame(['example.visible'], array_values($exampleIds));
+        $targets = array_column($body['commands'], 'target', 'id');
+        $this->assertSame(['kind' => 'handler'], $targets['example.visible']);
         $this->assertSame(['example.visible'], $body['recent']);
     }
 

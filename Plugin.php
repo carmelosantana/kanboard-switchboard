@@ -4,6 +4,7 @@ namespace Kanboard\Plugin\Switchboard;
 
 use Kanboard\Core\Plugin\Base;
 use Kanboard\Core\Security\Role;
+use Kanboard\Plugin\Switchboard\Command\CoreCommands;
 use Kanboard\Plugin\Switchboard\Model\Executor;
 use Kanboard\Plugin\Switchboard\Model\Frecency;
 use Kanboard\Plugin\Switchboard\Model\Providers;
@@ -33,6 +34,8 @@ class Plugin extends Base
         $this->container['switchboardExecutor'] = $this->container->factory(
             static fn(Container $c): Executor => new Executor($c)
         );
+
+        $this->hook->on('switchboard:commands', CoreCommands::forContext(...));
 
         $builtins = [
             ['switchboard.tasks', 'Tasks', '#', 10, new Tasks($this->container)],
