@@ -3,11 +3,16 @@
 namespace Kanboard\Plugin\Switchboard;
 
 use Kanboard\Core\Plugin\Base;
+use Kanboard\Plugin\Switchboard\Model\Registry;
+use Pimple\Container;
 
 class Plugin extends Base
 {
     public function initialize(): void
     {
+        $this->container['switchboardRegistry'] = $this->container->factory(
+            static fn(Container $c): Registry => new Registry($c)
+        );
     }
 
     public function getPluginName(): string
