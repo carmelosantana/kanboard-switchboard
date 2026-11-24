@@ -17,6 +17,10 @@ class Plugin extends Base
 {
     public function initialize(): void
     {
+        if (isset($this->container['route'])) {
+            $this->registerRoutes();
+        }
+
         $this->container['switchboardRegistry'] = $this->container->factory(
             static fn(Container $c): Registry => new Registry($c)
         );
@@ -75,5 +79,25 @@ class Plugin extends Base
     public function getCompatibleVersion(): string
     {
         return '>=1.2.47';
+    }
+
+    private function registerRoutes(): void
+    {
+        $routes = [
+            'switchboard' => ['PageController', 'index'],
+            'switchboard/confirm' => ['PageController', 'confirm'],
+            'switchboard/commands' => ['ApiController', 'commands'],
+            'switchboard/providers' => ['ApiController', 'providers'],
+            'switchboard/search' => ['ApiController', 'search'],
+            'switchboard/run' => ['ApiController', 'run'],
+            'switchboard/used' => ['ApiController', 'used'],
+            'switchboard/settings' => ['SettingsController', 'show'],
+            'switchboard/settings/save' => ['SettingsController', 'save'],
+            'switchboard/admin' => ['SettingsController', 'admin'],
+            'switchboard/admin/save' => ['SettingsController', 'adminSave'],
+        ];
+        foreach ($routes as $path => [$controller, $action]) {
+            $this->route->addRoute($path, $controller, $action, 'Switchboard');
+        }
     }
 }

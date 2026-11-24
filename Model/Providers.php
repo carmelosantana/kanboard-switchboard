@@ -4,7 +4,6 @@ namespace Kanboard\Plugin\Switchboard\Model;
 
 use Kanboard\Core\Base;
 use Pimple\Container;
-use RuntimeException;
 use Throwable;
 
 final class Providers extends Base
@@ -162,12 +161,4 @@ final class Providers extends Base
     {
         $this->logger->warning(sprintf('Switchboard: skipped provider "%s" (%s)', $id, $reason));
     }
-}
-
-final class UnknownProvider extends RuntimeException
-{
-}
-
-final class ProviderFailed extends RuntimeException
-{
 }
