@@ -1,7 +1,7 @@
 {
     "name": "Switchboard",
     "description": "Command palette for Kanboard: press Ctrl/⌘+K to find and run any action, with commands and search added by plugins.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Carmelo Santana",
     "homepage": "https://github.com/carmelosantana/kanboard-switchboard",
     "license": "MIT",

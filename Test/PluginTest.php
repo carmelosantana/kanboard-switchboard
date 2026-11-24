@@ -11,7 +11,7 @@ final class PluginTest extends TestCase
         $manifest = $this->readManifest();
         $plugin = new Plugin(new Container());
 
-        $this->assertSame('1.0.0', $manifest['version']);
+        $this->assertSame('1.0.1', $manifest['version']);
         $this->assertSame($manifest['version'], $plugin->getPluginVersion());
     }
 
