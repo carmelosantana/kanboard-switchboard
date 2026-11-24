@@ -7,6 +7,16 @@ use KanboardTests\units\Base;
 
 final class InputValidatorTest extends Base
 {
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testInvalidInputCanBeAutoloadedIndependently(): void
+    {
+        $error = new InvalidInput('value');
+        $this->assertSame('value', $error->field);
+    }
+
     public function testOnlyDeclaredFieldsAreKeptAndOptionalFieldsMayBeOmitted(): void
     {
         $validator = new InputValidator($this->container, ['id' => 1, 'role' => Role::APP_USER]);

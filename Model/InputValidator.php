@@ -2,18 +2,9 @@
 
 namespace Kanboard\Plugin\Switchboard\Model;
 
-use InvalidArgumentException;
 use Kanboard\Core\Base;
 use Kanboard\Core\Security\Role;
 use Pimple\Container;
-
-final class InvalidInput extends InvalidArgumentException
-{
-    public function __construct(public readonly string $field)
-    {
-        parent::__construct($field);
-    }
-}
 
 final class InputValidator extends Base
 {

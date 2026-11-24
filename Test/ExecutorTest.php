@@ -38,11 +38,13 @@ final class ExecutorTest extends Base
         $this->register(['permission' => Role::APP_ADMIN]);
         $this->assertSame(['status' => 403, 'body' => ['error' => 'forbidden']], $this->execute());
         $this->assertSame(0, $this->calls);
+        $this->assertSame([], $this->recentUses());
     }
 
     public function testUnknownCommandReturns404(): void
     {
         $this->assertSame(['status' => 404, 'body' => ['error' => 'unknown command']], $this->execute());
+        $this->assertSame([], $this->recentUses());
     }
 
     public function testInvalidAndInaccessibleProjectInputsReturnTheField(): void
@@ -56,6 +58,7 @@ final class ExecutorTest extends Base
         $this->assertSame($expected, $this->execute());
         $this->assertSame($expected, $this->execute(['value' => (string) $private]));
         $this->assertSame(0, $this->calls);
+        $this->assertSame([], $this->recentUses());
     }
 
     public function testReversibleHandlerReceivesCleanInputAndRecordsOneUse(): void
@@ -74,8 +77,7 @@ final class ExecutorTest extends Base
 
         $this->assertSame(['status' => 200, 'body' => self::TOAST], $this->execute(['value' => 'one', 'extra' => 'drop']));
         $this->assertSame(1, $this->calls);
-        $stored = $this->container['userMetadataModel']->get($this->user['id'], 'switchboard.recent');
-        $this->assertSame([['id' => self::ID, 'count' => 1, 'last' => $this->now]], json_decode($stored, true));
+        $this->assertSame([['id' => self::ID, 'count' => 1, 'last' => $this->now]], $this->recentUses());
     }
 
     public function testConsequentialCommandRequiresConfirmationBoundToInputUserAndExpiry(): void
@@ -88,21 +90,27 @@ final class ExecutorTest extends Base
         $this->assertStringContainsString('Run "Test command"?', $confirm['message']);
         $this->assertStringContainsString('first', $confirm['message']);
         $this->assertSame(0, $this->calls);
+        $this->assertSame([], $this->recentUses());
 
         $secret = $this->container['configModel']->getOption('switchboard_secret');
         $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $secret);
         $token = $confirm['token'];
         $invalid = ['status' => 409, 'body' => ['error' => 'invalid confirm']];
         $this->assertSame($invalid, $this->execute(['value' => 'second'], $token));
+        $this->assertSame([], $this->recentUses());
 
         $other = $this->container['userModel']->create(['username' => 'other']);
         $this->assertSame($invalid, $this->execute($input, $token, ['id' => $other, 'role' => Role::APP_USER]));
+        $this->assertSame([], $this->recentUses($other));
         $this->assertSame(0, $this->calls);
         $this->assertSame(['status' => 200, 'body' => self::TOAST], $this->execute($input, $token));
         $this->assertSame(1, $this->calls);
+        $recorded = [['id' => self::ID, 'count' => 1, 'last' => $this->now]];
+        $this->assertSame($recorded, $this->recentUses());
         $this->now += 121;
         $this->assertSame($invalid, $this->execute($input, $token));
         $this->assertSame(1, $this->calls);
+        $this->assertSame($recorded, $this->recentUses());
         $this->execute($input);
         $this->assertSame($secret, $this->container['configModel']->getOption('switchboard_secret'));
     }
@@ -124,9 +132,11 @@ final class ExecutorTest extends Base
         ]);
 
         $this->assertSame(['status' => 428, 'body' => ['error' => 'step up required', 'url' => '/step-up']], $this->execute());
+        $this->assertSame([], $this->recentUses());
         $approved = true;
         $this->assertArrayHasKey('confirm', $this->execute()['body']);
         $this->assertSame(0, $this->calls);
+        $this->assertSame([], $this->recentUses());
     }
 
     public function testStepUpWithoutAdapterRequiresConfirmation(): void
@@ -135,6 +145,7 @@ final class ExecutorTest extends Base
 
         $this->assertArrayHasKey('confirm', $this->execute()['body']);
         $this->assertSame(0, $this->calls);
+        $this->assertSame([], $this->recentUses());
     }
 
     public function testHandlerExceptionReturnsGenericErrorAndLogsOnlyClass(): void
@@ -147,6 +158,7 @@ final class ExecutorTest extends Base
             ->with('Switchboard: command "test.command" failed (RuntimeException)');
 
         $this->assertSame(['status' => 500, 'body' => ['error' => 'command failed']], $this->execute());
+        $this->assertSame([], $this->recentUses());
     }
 
     public function testUnknownResultTypeFails(): void
@@ -154,6 +166,7 @@ final class ExecutorTest extends Base
         $this->register(['target' => ['kind' => 'handler', 'handler' => static fn(): array => ['type' => 'weird']]]);
 
         $this->assertSame(['status' => 500, 'body' => ['error' => 'command failed']], $this->execute());
+        $this->assertSame([], $this->recentUses());
     }
 
     public function testListResultsAreCappedAtTenItems(): void
@@ -175,6 +188,13 @@ final class ExecutorTest extends Base
             'status' => 200,
             'body' => ['type' => 'navigate', 'url' => '?controller=DashboardController&action=show'],
         ], $this->execute());
+    }
+
+    private function recentUses(?int $userId = null): array
+    {
+        $stored = $this->container['userMetadataModel']->get($userId ?? $this->user['id'], 'switchboard.recent', '[]');
+
+        return json_decode($stored, true);
     }
 
     private function execute(array $input = [], ?string $token = null, ?array $user = null): array

@@ -50,7 +50,6 @@ final class Executor extends Base
                 }
             }
 
-            $body = null;
             if ($command['risk'] === 'consequential' || $command['step_up']) {
                 $tokens = new ConfirmToken($this->confirmationSecret(), $this->clock);
                 if ($confirmToken === null) {
@@ -58,13 +57,17 @@ final class Executor extends Base
                     if ($input !== []) {
                         $message .= ' '.implode(', ', $input);
                     }
-                    $body = ['confirm' => ['message' => $message, 'token' => $tokens->issue($user['id'], $id, $input)]];
-                } elseif (!$tokens->verify($confirmToken, $user['id'], $id, $input)) {
+                    return [
+                        'status' => 200,
+                        'body' => ['confirm' => ['message' => $message, 'token' => $tokens->issue($user['id'], $id, $input)]],
+                    ];
+                }
+                if (!$tokens->verify($confirmToken, $user['id'], $id, $input)) {
                     return $this->error(409, 'invalid confirm');
                 }
             }
 
-            $body ??= $command['target']['kind'] === 'handler'
+            $body = $command['target']['kind'] === 'handler'
                 ? $this->normalizeResult($command['target']['handler']($user, $ctx, $input))
                 : ['type' => 'navigate', 'url' => $registry->toClient($command)['url'] ?? null];
         } catch (Throwable $error) {
