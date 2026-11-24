@@ -55,7 +55,7 @@ final class CoreCommands
     {
         return [
             'id' => 'switchboard.core.'.$name,
-            'title' => $title,
+            'title' => t($title),
             'group' => 'Kanboard',
             'risk' => 'read',
             'permission' => $permission,

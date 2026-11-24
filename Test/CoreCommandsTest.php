@@ -13,6 +13,19 @@ final class CoreCommandsTest extends Base
 {
     private const BOARD = ['project_id' => 15, 'route' => ['controller' => 'BoardViewController']];
 
+    public function testTitlesAreTranslated(): void
+    {
+        \Kanboard\Core\Translator::load('fr_FR');
+        try {
+            $titles = array_column(CoreCommands::forContext(self::BOARD), 'title', 'id');
+        } finally {
+            \Kanboard\Core\Translator::unload();
+        }
+        $this->assertSame('Tableau de bord', $titles['switchboard.core.dashboard']);
+        $this->assertSame('Raccourcis clavier', $titles['switchboard.core.shortcuts']);
+        $this->assertSame('Nouvelle tâche', $titles['switchboard.core.new-task']);
+    }
+
     public function testCommandsWithoutAProject(): void
     {
         $commands = array_column(CoreCommands::forContext(['route' => self::BOARD['route']]), null, 'id');
