@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (Unreleased)
+## 1.0.0 — 2026-11-24
 
 - Command palette on Ctrl/⌘+K (and Ctrl/⌘+Shift+K in editors), with `/` to focus page search and a header button.
 - `switchboard:commands` registry: namespaced descriptors with permissions, risk tiers, typed input (up to 3 fields) and route, modal, post or handler targets.
