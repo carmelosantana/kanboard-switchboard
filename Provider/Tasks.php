@@ -6,6 +6,7 @@ use Kanboard\Core\Base;
 use Kanboard\Core\Security\Role;
 use Kanboard\Model\ProjectModel;
 use Kanboard\Model\TaskModel;
+use Kanboard\Plugin\Switchboard\Model\LikeTerm;
 
 final class Tasks extends Base
 {
@@ -28,7 +29,7 @@ final class Tasks extends Base
         if (ctype_digit($term)) {
             $query->eq('id', (int) $term);
         } else {
-            $query->eq('is_active', TaskModel::STATUS_OPEN)->ilike('title', '%'.$term.'%');
+            $query->eq('is_active', TaskModel::STATUS_OPEN)->addCondition(LikeTerm::contains($this->db, 'title', $term));
         }
 
         $offset = ctype_digit($cursor ?? '') ? (int) $cursor : 0;

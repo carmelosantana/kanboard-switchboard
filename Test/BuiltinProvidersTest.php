@@ -108,6 +108,28 @@ final class BuiltinProvidersTest extends Base
         );
     }
 
+    /** %, _ and the escape character match themselves, not any text. */
+    public function testLikeWildcardsInTermsMatchLiterally(): void
+    {
+        $this->createTask('Done 100% today', $this->projectOne);
+        $this->createTask('Done 1000 today', $this->projectOne);
+        $this->createTask('a_b c!d', $this->projectOne);
+        $this->createTask('axb cxd', $this->projectOne);
+        $this->assertSame(['Done 100% today'], array_column($this->search('tasks', '100%')['entries'], 'title'));
+        $this->assertSame(['a_b c!d'], array_column($this->search('tasks', 'a_b')['entries'], 'title'));
+        $this->assertSame(['a_b c!d'], array_column($this->search('tasks', 'c!d')['entries'], 'title'));
+
+        $projects = $this->container['projectModel'];
+        $this->container['projectUserRoleModel']->addUser($projects->create(['name' => 'p_q']), $this->alice['id'], Role::PROJECT_MEMBER);
+        $this->container['projectUserRoleModel']->addUser($projects->create(['name' => 'pxq']), $this->alice['id'], Role::PROJECT_MEMBER);
+        $this->assertSame(['p_q'], array_column($this->search('projects', 'p_q')['entries'], 'title'));
+
+        $this->container['userModel']->create(['username' => 'member-50%']);
+        $this->container['userModel']->create(['username' => 'member-500']);
+        $admin = ['id' => 1, 'role' => Role::APP_ADMIN];
+        $this->assertSame(['member-50%'], array_column($this->search('users', '50%', user: $admin)['entries'], 'title'));
+    }
+
     public function testSensitiveProviderStripsEntryId(): void
     {
         $this->container['hook']->on('switchboard:search', static fn(array $ctx): array => [[

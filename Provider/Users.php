@@ -8,6 +8,7 @@ use Kanboard\Model\GroupMemberModel;
 use Kanboard\Model\ProjectGroupRoleModel;
 use Kanboard\Model\ProjectUserRoleModel;
 use Kanboard\Model\UserModel;
+use Kanboard\Plugin\Switchboard\Model\LikeTerm;
 
 final class Users extends Base
 {
@@ -31,9 +32,8 @@ final class Users extends Base
             $query->beginOr()->inSubquery('id', $directMembers)->inSubquery('id', $groupMembers)->closeOr();
         }
 
-        $pattern = '%'.$term.'%';
         $offset = ctype_digit($cursor ?? '') ? (int) $cursor : 0;
-        $rows = $query->beginOr()->ilike('username', $pattern)->ilike('name', $pattern)->closeOr()
+        $rows = $query->beginOr()->addCondition(LikeTerm::contains($this->db, 'username', $term))->addCondition(LikeTerm::contains($this->db, 'name', $term))->closeOr()
             ->asc('username')->asc('id')->offset($offset)->limit($limit)->findAll();
         $entries = [];
         foreach ($rows as $row) {

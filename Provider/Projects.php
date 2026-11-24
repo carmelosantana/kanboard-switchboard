@@ -5,6 +5,7 @@ namespace Kanboard\Plugin\Switchboard\Provider;
 use Kanboard\Core\Base;
 use Kanboard\Core\Security\Role;
 use Kanboard\Model\ProjectModel;
+use Kanboard\Plugin\Switchboard\Model\LikeTerm;
 
 final class Projects extends Base
 {
@@ -20,7 +21,7 @@ final class Projects extends Base
         }
 
         $offset = ctype_digit($cursor ?? '') ? (int) $cursor : 0;
-        $rows = $query->ilike('name', '%'.$term.'%')->asc('name')->asc('id')->offset($offset)->limit($limit)->findAll();
+        $rows = $query->addCondition(LikeTerm::contains($this->db, 'name', $term))->asc('name')->asc('id')->offset($offset)->limit($limit)->findAll();
         $entries = [];
         foreach ($rows as $row) {
             $entries[] = [
