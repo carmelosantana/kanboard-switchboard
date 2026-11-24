@@ -35,6 +35,16 @@ class Plugin extends Base
             static fn(Container $c): Executor => new Executor($c)
         );
 
+        if (isset($this->container['applicationAccessMap'])) {
+            $this->applicationAccessMap->add('SettingsController', ['admin', 'adminSave'], Role::APP_ADMIN);
+        }
+        $this->hook->on('template:header:dropdown', [
+            'template' => 'Switchboard:header/link',
+            'callable' => $this->headerContext(...),
+        ]);
+        $this->hook->on('template:user:sidebar:actions', ['template' => 'Switchboard:user/sidebar']);
+        $this->hook->on('template:config:sidebar', ['template' => 'Switchboard:config/sidebar']);
+
         $this->hook->on('switchboard:commands', CoreCommands::forContext(...));
 
         $builtins = [
@@ -82,6 +92,23 @@ class Plugin extends Base
     public function getCompatibleVersion(): string
     {
         return '>=1.2.47';
+    }
+
+    private function headerContext(): array
+    {
+        $context = array_filter([
+            'from_controller' => $this->router->getController(),
+            'from_action' => $this->router->getAction(),
+            'from_plugin' => $this->router->getPlugin(),
+        ], static fn(string $value): bool => $value !== '');
+        foreach (['project_id', 'task_id'] as $key) {
+            $id = $this->request->getStringParam($key);
+            if (is_string($id) && ctype_digit($id) && (int) $id > 0) {
+                $context[$key] = $id;
+            }
+        }
+
+        return ['switchboardContext' => $context];
     }
 
     private function registerRoutes(): void
