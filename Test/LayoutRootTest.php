@@ -44,6 +44,15 @@ final class LayoutRootTest extends Base
         $this->assertNotNull($root->querySelector('[data-slot="switchboard-status"][role="status"]'));
     }
 
+    /** A live region is announced only when it exists before its first message (#7338). */
+    public function testRootHasAnEmptyToastLiveRegionBeforeAnyMessage(): void
+    {
+        $this->logIn();
+        $slot = $this->layoutRoot()->querySelector('[data-slot="switchboard-toast"][role="status"]');
+        $this->assertNotNull($slot);
+        $this->assertSame('', $slot->textContent);
+    }
+
     public function testSavedPreferenceDisablesSingleKeyShortcuts(): void
     {
         $userId = $this->logIn();

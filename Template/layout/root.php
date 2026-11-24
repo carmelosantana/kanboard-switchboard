@@ -15,5 +15,6 @@
      data-from-action="<?= $this->text->e($switchboardContext['from_action'] ?? '') ?>"
      data-from-plugin="<?= $this->text->e($switchboardContext['from_plugin'] ?? '') ?>">
     <div data-slot="switchboard-status" role="status"></div>
+    <div data-slot="switchboard-toast" role="status"></div>
 </div>
 <?php endif ?>

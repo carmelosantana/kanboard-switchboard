@@ -137,6 +137,13 @@ dialog[data-slot=switchboard] [role=option][aria-selected=true] {
     padding: .75rem 1rem;
 }
 
+/* Always in the page as a live region; draws nothing until a message arrives. */
+[data-slot=switchboard-toast]:empty {
+    border: 0;
+    padding: 0;
+    background: none;
+}
+
 [data-slot=switchboard-toast] button {
     margin-inline-start: .75rem;
 }

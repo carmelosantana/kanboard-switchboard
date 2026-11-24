@@ -557,11 +557,15 @@
         }
 
         function showToast(message, undo, source) {
+            // The layout renders this live region empty; one created with its message is not announced.
             if (!toastSlot) {
-                toastSlot = element('div', {});
+                toastSlot = root.querySelector('[data-slot=switchboard-toast]');
+            }
+            if (!toastSlot) {
+                toastSlot = element('div', { role: 'status', 'data-slot': 'switchboard-toast' });
                 root.append(toastSlot);
             }
-            const toast = element('div', { role: 'status', 'data-slot': 'switchboard-toast' }, message);
+            const toast = [element('span', {}, message)];
             if (undo && typeof undo.id === 'string') {
                 const button = element('button', { type: 'button' }, 'Undo');
                 button.addEventListener('click', () => {
@@ -570,9 +574,9 @@
                     openPalette('commands', source);
                     runHandler(undo.id, undo.input ?? {});
                 });
-                toast.append(button);
+                toast.push(button);
             }
-            toastSlot.replaceChildren(toast);
+            toastSlot.replaceChildren(...toast);
             win.clearTimeout(toastTimer);
             toastTimer = win.setTimeout(() => toastSlot.replaceChildren(), 5000);
         }

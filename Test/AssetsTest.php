@@ -47,6 +47,16 @@ final class AssetsTest extends TestCase
         $this->assertMatchesRegularExpression('/kbd\[data-slot=switchboard-shortcut\]\s*\{[^}]*margin-left:\s*auto\s*;/', $css);
     }
 
+    /** The toast live region is always in the page; empty, it draws nothing but stays in the accessibility tree. */
+    public function testEmptyToastRegionIsInvisibleButNotHidden(): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/\[data-slot=switchboard-toast\]:empty\s*\{[^}]*border:\s*0\s*;[^}]*padding:\s*0\s*;[^}]*background:\s*none\s*;/',
+            $this->stylesheet()
+        );
+        $this->assertDoesNotMatchRegularExpression('/switchboard-toast\]:empty\s*\{[^}]*(display:\s*none|visibility:\s*hidden)/', $this->stylesheet());
+    }
+
     public function testMotionRequiresNoReducedMotionPreference(): void
     {
         foreach ($this->declarations() as [$property, $value, $allowsMotion]) {

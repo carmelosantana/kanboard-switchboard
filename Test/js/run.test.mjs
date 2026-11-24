@@ -26,6 +26,7 @@ async function setup(command, responses, config) {
         ...config,
     });
     const status = add(root, 'div', { role: 'status', 'data-slot': 'switchboard-status' });
+    const toastSlot = add(root, 'div', { role: 'status', 'data-slot': 'switchboard-toast' });
     const timers = fakeTimers();
     const requests = [];
     const actions = [];
@@ -85,7 +86,7 @@ async function setup(command, responses, config) {
         timers.advance(ms);
         await settle();
     };
-    return { doc, root, status, requests, actions, posts, dialog, input, type, key, settle, results, tick };
+    return { doc, root, status, toastSlot, requests, actions, posts, dialog, input, type, key, settle, results, tick };
 }
 
 test('confirmation uses literal text, resubmits with its token, and shows a literal toast with undo', async () => {
@@ -108,15 +109,18 @@ test('confirmation uses literal text, resubmits with its token, and shows a lite
     await ui.settle();
     assert.equal(ui.posts[1].confirm_token, 'confirm-value');
     const undo = ui.doc.querySelectorAll('button').find(button => button.textContent === 'Undo');
-    assert.equal(undo.parentNode.getAttribute('role'), 'status');
-    assert.ok(undo.parentNode.textContent.includes(markup));
+    assert.equal(undo.parentNode, ui.toastSlot, 'the toast fills the persistent live region');
+    assert.equal(ui.doc.querySelectorAll('[data-slot=switchboard-toast]').length, 1, 'no new toast region per toast');
+    assert.equal(ui.toastSlot.querySelectorAll('[role=status]').length, 0, 'no live region nested in the slot');
+    assert.ok(ui.toastSlot.textContent.includes(markup));
     assert.equal(ui.doc.querySelectorAll('img').length, 0);
     undo.dispatchEvent(new FakeEvent('click'));
     await ui.settle();
     assert.deepEqual(ui.posts[2], { id: 'test.undo', input: '{"item":"42"}', csrf_token: 'csrf-value' });
-    assert.ok(ui.root.textContent.includes('Undone'));
+    assert.ok(ui.toastSlot.textContent.includes('Undone'));
     await ui.tick(5000);
-    assert.ok(!ui.root.textContent.includes('Undone'));
+    assert.equal(ui.toastSlot.textContent, '');
+    assert.equal(ui.toastSlot.parentNode, ui.root, 'the slot stays for the next message');
 });
 
 test('a text result renders a paragraph as literal text', async () => {
