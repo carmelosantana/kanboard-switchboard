@@ -2,7 +2,7 @@
 
 A command palette for Kanboard. Press **Ctrl/⌘+K** anywhere, type, and run any action you're allowed to: jump to a project, open a task, switch views, or run a plugin's command. Plugins add their own commands and search providers through two hooks.
 
-Requires Kanboard ≥ 1.2.47 and PHP ≥ 8.4. It works on stock Kanboard and under ShadcnTheme (light and dark), and uses SuiteUI's tokens when SuiteUI is installed.
+Requires Kanboard ≥ 1.2.47 and PHP ≥ 8.4. It works on stock Kanboard and under ShadcnTheme (light and dark), and uses Harbor's tokens when Harbor is installed.
 
 ## Install
 

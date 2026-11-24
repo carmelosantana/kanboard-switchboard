@@ -9,6 +9,6 @@
     "php_version": ">=8.4",
     "requires": [],
     "recommends": [
-        { "plugin": "SuiteUI", "reason": "uses SuiteUI's tokens and dialog styling when installed" }
+        { "plugin": "Harbor", "reason": "uses Harbor's tokens and dialog styling when installed" }
     ]
 }

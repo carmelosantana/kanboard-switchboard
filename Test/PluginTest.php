@@ -27,8 +27,8 @@ final class PluginTest extends TestCase
         $this->assertTrue(array_is_list($manifest['recommends']));
         $this->assertCount(1, $manifest['recommends']);
         $recommendation = $manifest['recommends'][0];
-        $this->assertSame('SuiteUI', $recommendation['plugin']);
-        $this->assertSame("uses SuiteUI's tokens and dialog styling when installed", $recommendation['reason']);
+        $this->assertSame('Harbor', $recommendation['plugin']);
+        $this->assertSame("uses Harbor's tokens and dialog styling when installed", $recommendation['reason']);
     }
 
     private function readManifest(): array
