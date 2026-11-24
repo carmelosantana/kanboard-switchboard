@@ -189,12 +189,12 @@
                     previousGroupId = groupId;
                     listbox.append(element('li', { role: 'presentation' }, row.group));
                 }
+                // One order for command and search rows: title, group, then hints.
                 const label = [
                     row.title,
-                    row.groupId ? '' : row.group,
+                    row.group,
                     row.url || row.leavesPage ? 'opens page' : '',
                     row.shortcut ? 'shortcut ' + row.shortcut : '',
-                    row.groupId ? row.group : '',
                 ].filter(Boolean).join(', ');
                 const option = element('li', {
                     id: 'switchboard-option-' + index,

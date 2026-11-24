@@ -77,7 +77,7 @@ test('search groups use the provider title and fall back to the id when the titl
         await ui.tick(250);
 
         assert.deepEqual(ui.headers(), [label]);
-        assert.equal(ui.options()[0].getAttribute('aria-label'), `Task A, opens page, ${label}`);
+        assert.equal(ui.options()[0].getAttribute('aria-label'), `Task A, ${label}, opens page`, 'command and search rows: title, group, then hints');
     }
 });
 
