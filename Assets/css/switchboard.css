@@ -1,0 +1,181 @@
+dialog[data-slot=switchboard],
+a[data-slot=switchboard-trigger],
+[data-slot=switchboard-toast] {
+    --switchboard-surface: hsl(var(--popover, 0 0% 100%));
+    --switchboard-text: hsl(var(--foreground, 222 47% 11%));
+    --switchboard-muted: hsl(var(--muted-foreground, 215 16% 47%));
+    --switchboard-border: hsl(var(--border, 214 32% 91%));
+    --switchboard-ring: hsl(var(--ring, 222 84% 5%));
+    --switchboard-highlight: hsl(var(--highlight, var(--accent, 210 40% 96%)));
+
+    box-sizing: border-box;
+    border: 1px solid var(--switchboard-border);
+    border-radius: .5rem;
+    background: var(--switchboard-surface);
+    color: var(--switchboard-text);
+}
+
+dialog[data-slot=switchboard] {
+    width: min(640px, 100vw - 2rem);
+    max-height: calc(80vh - 1rem);
+    margin: 20vh auto 0;
+    padding: 1rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+}
+
+dialog[data-slot=switchboard][open] {
+    display: flex;
+    flex-direction: column;
+}
+
+dialog[data-slot=switchboard]::backdrop {
+    background: hsl(0 0% 0% / .4);
+}
+
+html:has(dialog[data-slot=switchboard][open]) {
+    overflow: hidden;
+}
+
+dialog[data-slot=switchboard] > h2 {
+    margin: 0 0 .75rem;
+    font-size: 1.125rem;
+}
+
+dialog[data-slot=switchboard] input[role=combobox] {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    padding: .625rem .75rem;
+    border: 1px solid var(--switchboard-border);
+    border-radius: .375rem;
+    background: var(--switchboard-surface);
+    color: var(--switchboard-text);
+    font: inherit;
+    font-size: max(1rem, 16px);
+}
+
+dialog[data-slot=switchboard] input[role=combobox]::placeholder,
+dialog[data-slot=switchboard] [role=presentation],
+dialog[data-slot=switchboard] > p {
+    color: var(--switchboard-muted);
+}
+
+dialog[data-slot=switchboard] :focus-visible,
+a[data-slot=switchboard-trigger]:focus-visible {
+    outline: 2px solid var(--switchboard-ring);
+    outline-offset: 2px;
+}
+
+dialog[data-slot=switchboard] [role=listbox] {
+    min-height: 0;
+    margin: .75rem 0 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+dialog[data-slot=switchboard] [role=listbox]:empty,
+dialog[data-slot=switchboard] > p:empty {
+    margin: 0;
+}
+
+dialog[data-slot=switchboard] [role=presentation] {
+    padding: .5rem .75rem .25rem;
+    font-size: .875rem;
+}
+
+dialog[data-slot=switchboard] [role=option] {
+    padding: .5rem .75rem;
+    border-radius: .25rem;
+}
+
+dialog[data-slot=switchboard] [role=option]:not([aria-disabled=true]) {
+    cursor: pointer;
+}
+
+dialog[data-slot=switchboard] [role=option] a {
+    color: inherit;
+}
+
+dialog[data-slot=switchboard] [role=option][aria-selected=true] {
+    background: var(--switchboard-highlight);
+    box-shadow: inset 3px 0 0 var(--switchboard-ring);
+}
+
+[data-slot=switchboard-status] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+[data-slot=switchboard-toast] {
+    position: fixed;
+    z-index: 1;
+    right: 1rem;
+    bottom: 1rem;
+    max-width: calc(100vw - 2rem);
+    padding: .75rem 1rem;
+}
+
+[data-slot=switchboard-toast] button {
+    margin-inline-start: .75rem;
+}
+
+a[data-slot=switchboard-trigger] {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0;
+    text-decoration: none;
+}
+
+a[data-slot=switchboard-trigger]::before {
+    content: "";
+    width: .625rem;
+    height: .625rem;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    transform: translate(-2px, -2px);
+}
+
+a[data-slot=switchboard-trigger]::after {
+    content: "";
+    position: absolute;
+    top: calc(50% + 3px);
+    left: 50%;
+    width: .375rem;
+    height: 2px;
+    background: currentColor;
+    transform: rotate(45deg);
+}
+
+a[data-slot=switchboard-trigger]:hover {
+    background: var(--switchboard-highlight);
+    color: var(--switchboard-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    a[data-slot=switchboard-trigger] {
+        transition: background-color 120ms ease;
+    }
+}
+
+@media (width < 640px) {
+    dialog[data-slot=switchboard] {
+        width: 100%;
+        max-width: none;
+        height: 100dvh;
+        max-height: none;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+    }
+}

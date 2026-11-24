@@ -44,6 +44,7 @@ class Plugin extends Base
         ]);
         $this->hook->on('template:user:sidebar:actions', ['template' => 'Switchboard:user/sidebar']);
         $this->hook->on('template:config:sidebar', ['template' => 'Switchboard:config/sidebar']);
+        $this->hook->on('template:layout:css', ['template' => 'plugins/Switchboard/Assets/css/switchboard.css']);
         foreach (['switchboard-core.js', 'switchboard.js'] as $script) {
             $this->hook->on('template:layout:js', ['template' => 'plugins/Switchboard/Assets/js/'.$script]);
         }
