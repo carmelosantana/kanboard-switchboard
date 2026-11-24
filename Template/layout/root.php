@@ -7,6 +7,7 @@
      data-used-url="<?= $this->url->href('SwitchboardApiController', 'used', ['plugin' => 'Switchboard'] + $switchboardContext) ?>"
      data-page-url="<?= $this->url->href('SwitchboardPageController', 'index', ['plugin' => 'Switchboard'] + $switchboardContext) ?>"
      data-csrf="<?= $this->text->e($this->app->getToken()->getReusableCSRFToken()) ?>"
+     data-form-csrf="<?= $this->text->e($this->app->getToken()->getCSRFToken()) ?>"
      data-single-keys="<?= $switchboardSingleKeys ?>"
      data-project-id="<?= $this->text->e($switchboardContext['project_id'] ?? '') ?>"
      data-task-id="<?= $this->text->e($switchboardContext['task_id'] ?? '') ?>"

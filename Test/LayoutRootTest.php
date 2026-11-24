@@ -37,6 +37,7 @@ final class LayoutRootTest extends Base
             $this->assertNotEmpty($root->getAttribute("data-$endpoint-url"));
         }
         $this->assertNotEmpty($root->getAttribute('data-csrf'));
+        $this->assertTrue($this->container['token']->validateCSRFToken($root->getAttribute('data-form-csrf')));
         $this->assertSame('1', $root->getAttribute('data-single-keys'));
         $this->assertSame('21', $root->getAttribute('data-project-id'));
         $this->assertSame('42', $root->getAttribute('data-task-id'));

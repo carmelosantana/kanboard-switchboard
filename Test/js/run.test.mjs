@@ -22,6 +22,7 @@ async function setup(command, responses, config) {
         'data-search-url': '/search',
         'data-run-url': '/run',
         'data-csrf': 'csrf-value',
+        'data-form-csrf': 'form-csrf-value',
         ...config,
     });
     const status = add(root, 'div', { role: 'status', 'data-slot': 'switchboard-status' });
@@ -126,14 +127,14 @@ test('a text result renders a paragraph as literal text', async () => {
     assert.equal(ui.doc.querySelectorAll('img').length, 0);
 });
 
-test('post targets submit a real POST form with CSRF and the collected input', async () => {
+test('post targets submit a real POST form with the form CSRF token and the collected input', async () => {
     const ui = await setup({
         ...handler, target: { kind: 'post' }, url: '/legacy-action', input: schema({ title: string }),
     }, []);
     ui.key('Enter');
     ui.type('Buy milk');
     ui.key('Enter');
-    assert.deepEqual(ui.actions, [['submit', 'post', '/legacy-action', { title: 'Buy milk', csrf_token: 'csrf-value' }]]);
+    assert.deepEqual(ui.actions, [['submit', 'post', '/legacy-action', { title: 'Buy milk', csrf_token: 'form-csrf-value' }]]);
 });
 
 test('three steps collect a string, an enum and a formatted project id', async () => {

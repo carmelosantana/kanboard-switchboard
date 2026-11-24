@@ -502,7 +502,7 @@
 
         function submitPost(url, input) {
             const form = element('form', { method: 'post', action: url, hidden: '' });
-            for (const [name, value] of Object.entries({ ...input, csrf_token: config.csrf })) {
+            for (const [name, value] of Object.entries({ ...input, csrf_token: config.formCsrf })) {
                 form.append(element('input', { type: 'hidden', name, value }));
             }
             doc.body.append(form);
