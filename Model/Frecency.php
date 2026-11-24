@@ -13,7 +13,6 @@ final class Frecency extends Base
     private const TABLE = 'switchboard_recent';
     private const LEGACY_KEY = 'switchboard.recent';
     private const CAPACITY = 50;
-    private const MAX_ID_LENGTH = 191;
     private const HALF_LIFE = 14 * 86400;
 
     private Closure $clock;
@@ -26,7 +25,7 @@ final class Frecency extends Base
 
     public function record(int $userId, string $commandId): void
     {
-        if (strlen($commandId) > self::MAX_ID_LENGTH) {
+        if (strlen($commandId) > CommandId::MAX_LENGTH) {
             return;
         }
 

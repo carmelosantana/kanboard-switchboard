@@ -19,6 +19,13 @@ final class CommandIdTest extends TestCase
         }
     }
 
+    /** 191 is the recents table's key length; a longer id could run but never be remembered (#7338). */
+    public function testIdsAreCappedAt191Characters(): void
+    {
+        $this->assertTrue(CommandId::isValid('a.'.str_repeat('b', 189)));
+        $this->assertFalse(CommandId::isValid('a.'.str_repeat('b', 190)));
+    }
+
     /** Registry, Providers and the settings controller share one rule (#7338). */
     public function testThePatternLivesOnlyInCommandId(): void
     {
