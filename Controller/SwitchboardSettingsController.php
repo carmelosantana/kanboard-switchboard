@@ -8,7 +8,7 @@ use Kanboard\Core\Security\Role;
 use Kanboard\Plugin\Switchboard\Model\Context;
 use Throwable;
 
-final class SettingsController extends BaseController
+final class SwitchboardSettingsController extends BaseController
 {
     private const SINGLE_KEYS = 'switchboard.single_keys';
     private const EXTERNAL_PROVIDERS = 'switchboard_external_providers';
@@ -116,7 +116,7 @@ final class SettingsController extends BaseController
     private function redirect(string $action): void
     {
         $this->response->withStatusCode(303)->redirect(
-            $this->helper->url->to('SettingsController', $action, ['plugin' => 'Switchboard'])
+            $this->helper->url->to('SwitchboardSettingsController', $action, ['plugin' => 'Switchboard'])
         );
     }
 }

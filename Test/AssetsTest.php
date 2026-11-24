@@ -71,6 +71,17 @@ final class AssetsTest extends TestCase
         }
     }
 
+    public function testAccessMapRegistrationsUseSwitchboardControllerNames(): void
+    {
+        $source = file_get_contents(__DIR__.'/../Plugin.php');
+        preg_match_all('/AccessMap\s*->\s*add\s*\(\s*([\x27"])(\w+)\1/', $source, $matches);
+
+        $this->assertNotEmpty($matches[2]);
+        foreach ($matches[2] as $controller) {
+            $this->assertStringStartsWith('Switchboard', $controller);
+        }
+    }
+
     private function stylesheet(): string
     {
         $path = __DIR__.'/../Assets/css/switchboard.css';

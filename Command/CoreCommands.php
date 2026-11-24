@@ -43,7 +43,7 @@ final class CoreCommands
         ]);
         $commands[] = self::command('settings', 'Switchboard settings', [
             'kind' => 'route',
-            'controller' => 'SettingsController',
+            'controller' => 'SwitchboardSettingsController',
             'action' => 'show',
             'params' => ['plugin' => 'Switchboard'],
         ]);

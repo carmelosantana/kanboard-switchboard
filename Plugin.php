@@ -36,7 +36,7 @@ class Plugin extends Base
         );
 
         if (isset($this->container['applicationAccessMap'])) {
-            $this->applicationAccessMap->add('SettingsController', ['admin', 'adminSave'], Role::APP_ADMIN);
+            $this->applicationAccessMap->add('SwitchboardSettingsController', ['admin', 'adminSave'], Role::APP_ADMIN);
         }
         $this->hook->on('template:header:dropdown', [
             'template' => 'Switchboard:header/link',
@@ -135,17 +135,17 @@ class Plugin extends Base
     private function registerRoutes(): void
     {
         $routes = [
-            'switchboard' => ['PageController', 'index'],
-            'switchboard/confirm' => ['PageController', 'confirm'],
+            'switchboard' => ['SwitchboardPageController', 'index'],
+            'switchboard/confirm' => ['SwitchboardPageController', 'confirm'],
             'switchboard/commands' => ['SwitchboardApiController', 'commands'],
             'switchboard/providers' => ['SwitchboardApiController', 'providers'],
             'switchboard/search' => ['SwitchboardApiController', 'search'],
             'switchboard/run' => ['SwitchboardApiController', 'run'],
             'switchboard/used' => ['SwitchboardApiController', 'used'],
-            'switchboard/settings' => ['SettingsController', 'show'],
-            'switchboard/settings/save' => ['SettingsController', 'save'],
-            'switchboard/admin' => ['SettingsController', 'admin'],
-            'switchboard/admin/save' => ['SettingsController', 'adminSave'],
+            'switchboard/settings' => ['SwitchboardSettingsController', 'show'],
+            'switchboard/settings/save' => ['SwitchboardSettingsController', 'save'],
+            'switchboard/admin' => ['SwitchboardSettingsController', 'admin'],
+            'switchboard/admin/save' => ['SwitchboardSettingsController', 'adminSave'],
         ];
         foreach ($routes as $path => [$controller, $action]) {
             $this->route->addRoute($path, $controller, $action, 'Switchboard');

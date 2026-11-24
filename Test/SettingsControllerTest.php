@@ -7,7 +7,7 @@ use Kanboard\Core\Http\Request;
 use Kanboard\Core\Http\Response;
 use Kanboard\Core\Plugin\Hook;
 use Kanboard\Core\Security\Role;
-use Kanboard\Plugin\Switchboard\Controller\SettingsController;
+use Kanboard\Middleware\ApplicationAuthorizationMiddleware;
 use Kanboard\Plugin\Switchboard\Plugin;
 use KanboardTests\units\Base;
 
@@ -20,6 +20,7 @@ final class SettingsControllerTest extends Base
         parent::setUp();
 
         $this->container['hook'] = new Hook();
+        $this->container['route']->enable();
         (new Plugin($this->container))->initialize();
     }
 
@@ -30,12 +31,12 @@ final class SettingsControllerTest extends Base
         $frecency->record($this->userId, 'example.recent');
         $frecency->record(1, 'example.other');
 
-        $this->call('save', ['single_keys' => '0']);
+        $this->call('/switchboard/settings/save', ['single_keys' => '0']);
         $this->assertSame('0', $this->container['userMetadataModel']->getAll($this->userId)['switchboard.single_keys']);
         $this->assertSame(['example.recent'], $frecency->recent($this->userId));
-        $this->assertMatchesRegularExpression('/<input type="checkbox" name="single_keys" value="1"\s*>/', $this->call('show'));
+        $this->assertMatchesRegularExpression('/<input type="checkbox" name="single_keys" value="1"\s*>/', $this->call('/switchboard/settings'));
 
-        $this->call('save', ['clear' => '1']);
+        $this->call('/switchboard/settings/save', ['clear' => '1']);
         $this->assertSame('0', $this->container['userMetadataModel']->getAll($this->userId)['switchboard.single_keys']);
         $this->assertSame([], $frecency->recent($this->userId));
         $this->assertSame(['example.other'], $frecency->recent(1));
@@ -44,9 +45,9 @@ final class SettingsControllerTest extends Base
     public function testBothSavesRequireCsrf(): void
     {
         $this->login(Role::APP_ADMIN);
-        foreach (['save', 'adminSave'] as $action) {
+        foreach (['/switchboard/settings/save', '/switchboard/admin/save'] as $path) {
             try {
-                $this->call($action, [], false);
+                $this->call($path, [], false);
                 $this->fail('Settings accepted without CSRF');
             } catch (AccessForbiddenException) {
                 $this->addToAssertionCount(1);
@@ -58,9 +59,22 @@ final class SettingsControllerTest extends Base
     {
         $this->login(Role::APP_MANAGER);
         $authorization = $this->container['applicationAuthorization'];
-        $this->assertFalse($authorization->isAllowed('SettingsController', 'adminSave', Role::APP_MANAGER));
-        $this->assertFalse($authorization->isAllowed('SettingsController', 'admin', Role::APP_MANAGER));
-        $this->assertTrue($authorization->isAllowed('SettingsController', 'adminSave', Role::APP_ADMIN));
+        $route = $this->container['route']->findRoute('switchboard/admin/save');
+        $this->assertFalse($authorization->isAllowed($route['controller'], $route['action'], Role::APP_MANAGER));
+        $this->assertTrue($authorization->isAllowed($route['controller'], $route['action'], Role::APP_ADMIN));
+
+        $route = $this->container['route']->findRoute('switchboard/admin');
+        $this->assertFalse($authorization->isAllowed($route['controller'], $route['action'], Role::APP_MANAGER));
+    }
+
+    public function testUserCanPostSettingsWhenAnotherPluginRestrictsSettingsControllerSave(): void
+    {
+        $this->login(Role::APP_USER);
+        $this->container['applicationAccessMap']->add('SettingsController', ['save'], Role::APP_ADMIN);
+
+        $this->call('/switchboard/settings/save', ['single_keys' => '0']);
+
+        $this->assertSame('0', $this->container['userMetadataModel']->getAll($this->userId)['switchboard.single_keys']);
     }
 
     public function testAdminDisplaysAndSavesOnlyRegisteredExternalProviders(): void
@@ -69,17 +83,17 @@ final class SettingsControllerTest extends Base
         $this->provider('example.external', 'External example', true);
         $this->provider('example.internal', 'Internal example', false);
         $this->provider('example.internal', 'Duplicate example', true);
-        $html = $this->call('admin');
+        $html = $this->call('/switchboard/admin');
         $this->assertStringContainsString('External example', $html);
         $this->assertStringNotContainsString('Internal example', $html);
         $this->assertStringNotContainsString('Duplicate example', $html);
 
-        $this->call('adminSave', ['providers' => [
+        $this->call('/switchboard/admin/save', ['providers' => [
             'example.external', 'evil.provider', 'example.internal', 'switchboard.tasks', 'example.external',
         ]]);
         $this->assertSame('["example.external"]', $this->container['configModel']->getOption('switchboard_external_providers'));
 
-        $this->call('adminSave', []);
+        $this->call('/switchboard/admin/save', []);
         $this->assertSame('[]', $this->container['configModel']->getOption('switchboard_external_providers'));
     }
 
@@ -101,14 +115,18 @@ final class SettingsControllerTest extends Base
         $this->container['userSession']->initialize($users->getById($this->userId));
     }
 
-    private function call(string $action, ?array $post = null, bool $csrf = true): string
+    private function call(string $path, ?array $post = null, bool $csrf = true): string
     {
         if ($post !== null && $csrf) {
             $post['csrf_token'] = $this->container['token']->getCSRFToken();
         }
         $this->container['request'] = new Request(
             $this->container,
-            ['REQUEST_METHOD' => $post === null ? 'GET' : 'POST'],
+            [
+                'REQUEST_METHOD' => $post === null ? 'GET' : 'POST',
+                'REQUEST_URI' => $path,
+                'PHP_SELF' => '/index.php',
+            ],
             [],
             $post ?? []
         );
@@ -120,7 +138,11 @@ final class SettingsControllerTest extends Base
         $response->method('withStatusCode')->willReturnSelf();
         $this->container['response'] = $response;
 
-        (new SettingsController($this->container))->$action();
+        $router = $this->container['router'];
+        $router->dispatch();
+        (new ApplicationAuthorizationMiddleware($this->container))->execute();
+        $controller = 'Kanboard\\Plugin\\'.$router->getPlugin().'\\Controller\\'.$router->getController();
+        (new $controller($this->container))->{$router->getAction()}();
 
         return $html;
     }

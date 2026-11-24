@@ -10,7 +10,7 @@ use Kanboard\Plugin\Switchboard\Model\ProviderFailed;
 use Kanboard\Plugin\Switchboard\Model\UnknownProvider;
 use Pimple\Container;
 
-final class PageController extends BaseController
+final class SwitchboardPageController extends BaseController
 {
     private const SEARCH_BUDGET_NS = 2_000_000_000;
 
@@ -185,7 +185,7 @@ final class PageController extends BaseController
 
     private function url(string $action, array $params = []): string
     {
-        return $this->helper->url->to('PageController', $action, ['plugin' => 'Switchboard'] + $params);
+        return $this->helper->url->to('SwitchboardPageController', $action, ['plugin' => 'Switchboard'] + $params);
     }
 
     private function renderPage(string $template, array $params): void

@@ -36,17 +36,17 @@ final class ApiControllerTest extends Base
     public function testRoutesAreRegistered(): void
     {
         $routes = [
-            'switchboard' => ['PageController', 'index'],
-            'switchboard/confirm' => ['PageController', 'confirm'],
+            'switchboard' => ['SwitchboardPageController', 'index'],
+            'switchboard/confirm' => ['SwitchboardPageController', 'confirm'],
             'switchboard/commands' => ['SwitchboardApiController', 'commands'],
             'switchboard/providers' => ['SwitchboardApiController', 'providers'],
             'switchboard/search' => ['SwitchboardApiController', 'search'],
             'switchboard/run' => ['SwitchboardApiController', 'run'],
             'switchboard/used' => ['SwitchboardApiController', 'used'],
-            'switchboard/settings' => ['SettingsController', 'show'],
-            'switchboard/settings/save' => ['SettingsController', 'save'],
-            'switchboard/admin' => ['SettingsController', 'admin'],
-            'switchboard/admin/save' => ['SettingsController', 'adminSave'],
+            'switchboard/settings' => ['SwitchboardSettingsController', 'show'],
+            'switchboard/settings/save' => ['SwitchboardSettingsController', 'save'],
+            'switchboard/admin' => ['SwitchboardSettingsController', 'admin'],
+            'switchboard/admin/save' => ['SwitchboardSettingsController', 'adminSave'],
         ];
 
         foreach ($routes as $path => [$controller, $action]) {

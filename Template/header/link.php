@@ -1,1 +1,1 @@
-<li><?= $this->url->link(t('Search and commands'), 'PageController', 'index', ['plugin' => 'Switchboard'] + $switchboardContext) ?></li>
+<li><?= $this->url->link(t('Search and commands'), 'SwitchboardPageController', 'index', ['plugin' => 'Switchboard'] + $switchboardContext) ?></li>

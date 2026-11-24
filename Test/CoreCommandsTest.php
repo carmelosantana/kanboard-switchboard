@@ -34,7 +34,7 @@ final class CoreCommandsTest extends Base
             'kind' => 'route', 'controller' => 'DashboardController', 'action' => 'show',
         ], $commands['switchboard.core.dashboard']['target']);
         $this->assertSame([
-            'kind' => 'route', 'controller' => 'SettingsController', 'action' => 'show', 'params' => ['plugin' => 'Switchboard'],
+            'kind' => 'route', 'controller' => 'SwitchboardSettingsController', 'action' => 'show', 'params' => ['plugin' => 'Switchboard'],
         ], $commands['switchboard.core.settings']['target']);
     }
 

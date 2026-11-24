@@ -1,5 +1,5 @@
 <div class="page-header"><h2><?= t('Switchboard') ?></h2></div>
-<form method="post" action="<?= $this->url->href('SettingsController', 'save', ['plugin' => 'Switchboard']) ?>">
+<form method="post" action="<?= $this->url->href('SwitchboardSettingsController', 'save', ['plugin' => 'Switchboard']) ?>">
     <?= $this->form->csrf() ?>
     <label>
         <input type="checkbox" name="single_keys" value="1" <?= $singleKeys ? 'checked' : '' ?>>

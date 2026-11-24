@@ -7,7 +7,7 @@ use Kanboard\Core\Http\Request;
 use Kanboard\Core\Http\Response;
 use Kanboard\Core\Plugin\Hook;
 use Kanboard\Core\Security\Role;
-use Kanboard\Plugin\Switchboard\Controller\PageController;
+use Kanboard\Plugin\Switchboard\Controller\SwitchboardPageController;
 use Kanboard\Plugin\Switchboard\Plugin;
 use KanboardTests\units\Base;
 
@@ -198,7 +198,7 @@ final class PageControllerTest extends Base
         });
         $this->container['response'] = $response;
 
-        (new PageController($this->container, $clock))->$action();
+        (new SwitchboardPageController($this->container, $clock))->$action();
 
         return $html;
     }

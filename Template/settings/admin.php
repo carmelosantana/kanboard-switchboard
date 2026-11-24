@@ -1,5 +1,5 @@
 <div class="page-header"><h2><?= t('Switchboard') ?></h2></div>
-<form method="post" action="<?= $this->url->href('SettingsController', 'adminSave', ['plugin' => 'Switchboard']) ?>">
+<form method="post" action="<?= $this->url->href('SwitchboardSettingsController', 'adminSave', ['plugin' => 'Switchboard']) ?>">
     <?= $this->form->csrf() ?>
     <fieldset>
         <legend><?= t('External search providers') ?></legend>
