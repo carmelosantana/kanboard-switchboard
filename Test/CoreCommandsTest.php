@@ -88,7 +88,7 @@ final class CoreCommandsTest extends Base
         $commands = CoreCommands::forContext(self::BOARD);
         $this->assertCount(10, $commands);
         foreach ($commands as $command) {
-            $this->assertMatchesRegularExpression('/^[a-z0-9]+(\.[a-z0-9_-]+)+$/D', $command['id']);
+            $this->assertTrue(\Kanboard\Plugin\Switchboard\Model\CommandId::isValid($command['id']), $command['id']);
             $this->assertStringStartsWith('switchboard.core.', $command['id']);
             $this->assertSame('Kanboard', $command['group']);
             $this->assertSame('read', $command['risk']);

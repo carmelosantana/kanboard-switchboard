@@ -107,7 +107,7 @@ final class Providers extends Base
                 $descriptor = is_array($descriptor) ? $descriptor : [];
                 $id = is_string($descriptor['id'] ?? null) ? $descriptor['id'] : '';
                 $reason = match (true) {
-                    !preg_match('/^[a-z0-9]+(\.[a-z0-9_-]+)+$/D', $id) => 'invalid id',
+                    !CommandId::isValid($id) => 'invalid id',
                     isset($providers[$id]) => 'duplicate id',
                     !$this->nonEmptyString($descriptor['title'] ?? null) => 'missing title',
                     !is_callable($descriptor['search'] ?? null) => 'search not callable',

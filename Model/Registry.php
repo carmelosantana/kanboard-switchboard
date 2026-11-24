@@ -124,7 +124,7 @@ class Registry extends Base
     private function invalidReason(array $descriptor, string $id, bool $duplicate): ?string
     {
         return match (true) {
-            !preg_match('/^[a-z0-9]+(\.[a-z0-9_-]+)+$/D', $id) => 'invalid id',
+            !CommandId::isValid($id) => 'invalid id',
             $duplicate => 'duplicate id',
             !$this->nonEmptyString($descriptor['title'] ?? null) => 'missing title',
             !in_array($descriptor['risk'], ['read', 'reversible', 'consequential'], true) => 'invalid risk',

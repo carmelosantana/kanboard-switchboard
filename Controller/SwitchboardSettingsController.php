@@ -5,6 +5,7 @@ namespace Kanboard\Plugin\Switchboard\Controller;
 use Kanboard\Controller\BaseController;
 use Kanboard\Core\Controller\AccessForbiddenException;
 use Kanboard\Core\Security\Role;
+use Kanboard\Plugin\Switchboard\Model\CommandId;
 use Kanboard\Plugin\Switchboard\Model\Context;
 use Throwable;
 
@@ -83,7 +84,7 @@ final class SwitchboardSettingsController extends BaseController
             foreach (is_array($rows) ? $rows : [] as $row) {
                 $id = $row['id'] ?? null;
                 $title = $row['title'] ?? null;
-                if (!is_string($id) || !preg_match('/^[a-z0-9]+(\.[a-z0-9_-]+)+$/D', $id) || isset($seen[$id])
+                if (!is_string($id) || !CommandId::isValid($id) || isset($seen[$id])
                     || !is_string($title) || trim($title) === ''
                     || !is_callable($row['search'] ?? null) || !is_callable($row['order'] ?? null)) {
                     continue;
