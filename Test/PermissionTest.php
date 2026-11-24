@@ -5,6 +5,11 @@ use Kanboard\Plugin\Switchboard\Model\Permission;
 use PHPUnit\Framework\TestCase;
 use Pimple\Container;
 
+function switchboardTestPermissionAllows(array $user, array $ctx): bool
+{
+    return $user['id'] === 7 && $ctx['project_id'] === 15;
+}
+
 final class PermissionTest extends TestCase
 {
     /** @dataProvider permissions */
@@ -55,8 +60,15 @@ final class PermissionTest extends TestCase
                 static fn(array $user, array $ctx): bool => $user['id'] === 7 && $ctx['project_id'] === 15,
                 'app-user', $project, null, true,
             ],
+            'array callable' => [[self::class, 'allowForTest'], 'app-user', $project, null, true],
+            'function name is not a permission' => ['switchboardTestPermissionAllows', 'app-user', $project, null, false],
             'truthy callable' => [static fn(): int => 1, 'app-user', [], null, false],
             'throwing callable' => [static fn() => throw new RuntimeException('private'), 'app-admin', [], null, false],
         ];
+    }
+
+    public static function allowForTest(array $user, array $ctx): bool
+    {
+        return switchboardTestPermissionAllows($user, $ctx);
     }
 }

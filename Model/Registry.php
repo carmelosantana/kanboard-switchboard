@@ -2,6 +2,7 @@
 
 namespace Kanboard\Plugin\Switchboard\Model;
 
+use Closure;
 use Kanboard\Core\Base;
 use Kanboard\Plugin\AiConnector\Model\ProviderRegistry;
 use Pimple\Container;
@@ -93,7 +94,7 @@ class Registry extends Base
         $client['target'] = ['kind' => $kind];
 
         if (in_array($kind, ['route', 'modal', 'post'], true)) {
-            $client['url'] = $this->helper->url->href($target['controller'], $target['action'], $target['params'] ?? []);
+            $client['url'] = $this->helper->url->to($target['controller'], $target['action'], $target['params'] ?? []);
         }
         if ($kind === 'modal' && isset($target['size'])) {
             $client['target']['size'] = $target['size'];
@@ -139,9 +140,10 @@ class Registry extends Base
             return false;
         }
 
+        $handler = $target['handler'] ?? null;
         return match ($target['kind'] ?? null) {
             'key' => str_starts_with($id, 'switchboard.core.') && $this->nonEmptyString($target['key'] ?? null),
-            'handler' => is_callable($target['handler'] ?? null),
+            'handler' => ($handler instanceof Closure || is_array($handler)) && is_callable($handler),
             'route', 'modal', 'post' => $this->nonEmptyString($target['controller'] ?? null)
                 && $this->nonEmptyString($target['action'] ?? null)
                 && is_array($target['params'] ?? [])

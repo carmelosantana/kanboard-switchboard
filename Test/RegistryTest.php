@@ -1,6 +1,7 @@
 <?php
 
 use Composer\Autoload\ClassLoader;
+use Kanboard\Core\Http\Route;
 use Kanboard\Core\Plugin\Hook;
 use Kanboard\Helper\UrlHelper;
 use Kanboard\Plugin\AiConnector\Model\ProviderRegistry;
@@ -47,6 +48,7 @@ final class RegistryTest extends TestCase
             array_diff_key($this->command('acme.untitled'), ['title' => true]),
             $this->command('acme.risk', ['risk' => 'dangerous']),
             $this->command('acme.target', ['target' => ['kind' => 'other']]),
+            $this->command('acme.string-handler', ['target' => ['kind' => 'handler', 'handler' => 'strval']]),
             $this->command('acme.input', ['input' => [
                 'type' => 'object',
                 'properties' => array_fill_keys(['a', 'b', 'c', 'd'], ['type' => 'string']),
@@ -54,7 +56,7 @@ final class RegistryTest extends TestCase
             $this->command('acme.foo', ['target' => ['kind' => 'key', 'key' => 'b']]),
             $this->command('switchboard.core.foo', ['target' => ['kind' => 'key', 'key' => 'b']]),
         ]);
-        $logged = $this->recordWarnings(7);
+        $logged = $this->recordWarnings(8);
 
         $commands = (new Registry($this->container))->all(self::CONTEXT);
 
@@ -66,6 +68,7 @@ final class RegistryTest extends TestCase
             'Switchboard: skipped command "acme.untitled" (missing title)',
             'Switchboard: skipped command "acme.risk" (invalid risk)',
             'Switchboard: skipped command "acme.target" (invalid target)',
+            'Switchboard: skipped command "acme.string-handler" (invalid target)',
             'Switchboard: skipped command "acme.input" (invalid input schema)',
             'Switchboard: skipped command "acme.foo" (invalid target)',
         ], $logged->getArrayCopy());
@@ -101,13 +104,19 @@ final class RegistryTest extends TestCase
         $this->assertEquals($defaults, array_intersect_key($commands[2], $defaults));
     }
 
-    public function testToClientKeepsPublicTargetDataAndUsesExactHref(): void
+    public function testToClientKeepsPublicTargetDataAndUsesRawUrl(): void
     {
-        $href = '/?controller=BoardViewController&amp;action=show&amp;project_id=15';
-        $urlHelper = $this->createMock(UrlHelper::class);
-        $urlHelper->expects($this->exactly(3))->method('href')
+        $url = '/?controller=BoardViewController&action=show&project_id=15';
+        $route = $this->createMock(Route::class);
+        $route->expects($this->exactly(3))->method('findUrl')
             ->with('BoardViewController', 'show', ['project_id' => 15])
-            ->willReturn($href);
+            ->willReturn('');
+        $this->container['route'] = $route;
+        $urlHelper = $this->getMockBuilder(UrlHelper::class)
+            ->setConstructorArgs([$this->container])
+            ->onlyMethods(['dir'])
+            ->getMock();
+        $urlHelper->method('dir')->willReturn('/');
         $this->container['helper'] = (object) ['url' => $urlHelper];
         $registry = new Registry($this->container);
         $handler = static fn(): array => [];
@@ -130,7 +139,7 @@ final class RegistryTest extends TestCase
             }
             $client = $registry->toClient($this->command('acme.link', ['target' => $target]));
             $this->assertSame($expected, $client['target']);
-            $this->assertSame($href, $client['url']);
+            $this->assertSame($url, $client['url']);
         }
 
         $key = ['kind' => 'key', 'key' => 'v+b'];

@@ -2,6 +2,7 @@
 
 namespace Kanboard\Plugin\Switchboard\Model;
 
+use Closure;
 use Kanboard\Core\Base;
 use Kanboard\Core\Security\Role;
 use Throwable;
@@ -22,7 +23,7 @@ class Permission extends Base
 
     public function allows(mixed $spec, array $user, array $ctx): bool
     {
-        if (is_callable($spec)) {
+        if (($spec instanceof Closure || is_array($spec)) && is_callable($spec)) {
             try {
                 return $spec($user, $ctx) === true;
             } catch (Throwable) {
