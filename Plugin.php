@@ -44,6 +44,13 @@ class Plugin extends Base
         ]);
         $this->hook->on('template:user:sidebar:actions', ['template' => 'Switchboard:user/sidebar']);
         $this->hook->on('template:config:sidebar', ['template' => 'Switchboard:config/sidebar']);
+        foreach (['switchboard-core.js', 'switchboard.js'] as $script) {
+            $this->hook->on('template:layout:js', ['template' => 'plugins/Switchboard/Assets/js/'.$script]);
+        }
+        $this->hook->on('template:layout:bottom', [
+            'template' => 'Switchboard:layout/root',
+            'callable' => $this->layoutContext(...),
+        ]);
 
         $this->hook->on('switchboard:commands', CoreCommands::forContext(...));
 
@@ -92,6 +99,19 @@ class Plugin extends Base
     public function getCompatibleVersion(): string
     {
         return '>=1.2.47';
+    }
+
+    private function layoutContext(): array
+    {
+        if (!$this->userSession->isLogged()) {
+            return [];
+        }
+        // get() treats the stored string "0" as empty.
+        $metadata = $this->userMetadataModel->getAll($this->userSession->getId());
+
+        return $this->headerContext() + [
+            'switchboardSingleKeys' => ($metadata['switchboard.single_keys'] ?? '1') === '1' ? '1' : '0',
+        ];
     }
 
     private function headerContext(): array
