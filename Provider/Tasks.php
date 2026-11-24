@@ -36,6 +36,7 @@ final class Tasks extends Base
         $entries = [];
         foreach ($rows as $row) {
             $entries[] = [
+                'id' => (int) $row['id'],
                 'title' => $row['title'],
                 'url' => $this->helper->url->to('TaskViewController', 'show', [
                     'task_id' => $row['id'],

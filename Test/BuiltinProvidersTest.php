@@ -57,6 +57,7 @@ final class BuiltinProvidersTest extends Base
 
         $result = $this->search('tasks', 'tIcKeT');
         $this->assertSame(['Visible Ticket'], array_column($result['entries'], 'title'));
+        $this->assertSame($id, $result['entries'][0]['id'] ?? null);
         $this->assertSame(
             '?controller=TaskViewController&action=show&task_id='.$id.'&project_id='.$this->projectOne,
             $result['entries'][0]['url']
@@ -75,7 +76,9 @@ final class BuiltinProvidersTest extends Base
 
     public function testProjectSearchUsesMembershipAndAdminSeesAllActiveProjects(): void
     {
-        $this->assertSame(['Shared One'], array_column($this->search('projects', 'sHaReD')['entries'], 'title'));
+        $entries = $this->search('projects', 'sHaReD')['entries'];
+        $this->assertSame(['Shared One'], array_column($entries, 'title'));
+        $this->assertSame([$this->projectOne], array_column($entries, 'id'));
         $admin = ['id' => 1, 'role' => Role::APP_ADMIN];
         $this->assertSame(['Shared One', 'Shared Two'], array_column($this->search('projects', 'shared', user: $admin)['entries'], 'title'));
     }
@@ -88,6 +91,38 @@ final class BuiltinProvidersTest extends Base
 
         $admin = ['id' => 1, 'role' => Role::APP_ADMIN];
         $this->assertSame(['Alice Member', 'Bob Member'], array_column($this->search('users', 'member-', user: $admin)['entries'], 'title'));
+    }
+
+    public function testUserSearchReturnsActiveUserIdsOnly(): void
+    {
+        $users = $this->container['userModel'];
+        $inactive = $users->create(['username' => 'member-disabled', 'is_active' => 0]);
+        $roles = $this->container['projectUserRoleModel'];
+        $this->assertTrue($roles->addUser($this->projectOne, $inactive, Role::PROJECT_MEMBER));
+
+        $this->assertSame([$this->alice['id']], array_column($this->search('users', 'member-')['entries'], 'id'));
+        $admin = ['id' => 1, 'role' => Role::APP_ADMIN];
+        $this->assertSame(
+            [$this->alice['id'], $this->bob['id']],
+            array_column($this->search('users', 'member-', user: $admin)['entries'], 'id')
+        );
+    }
+
+    public function testSensitiveProviderStripsEntryId(): void
+    {
+        $this->container['hook']->on('switchboard:search', static fn(array $ctx): array => [[
+            'id' => 'private.entries',
+            'title' => 'Private entries',
+            'prefix' => '!',
+            'sensitive' => true,
+            'order' => static fn(array $ctx): int => 1,
+            'search' => static fn(): array => [
+                'entries' => [['id' => 42, 'title' => 'Entry', 'url' => '/entry']],
+            ],
+        ]]);
+
+        $result = $this->providers->search('private.entries', $this->alice, ['prefix' => '!'], 'entry', null, 10);
+        $this->assertSame([['title' => 'Entry', 'url' => '/entry']], $result['entries']);
     }
 
     public function testTaskPagingReturnsOffsetOnlyForAFullPage(): void

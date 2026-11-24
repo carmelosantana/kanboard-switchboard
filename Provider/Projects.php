@@ -24,6 +24,7 @@ final class Projects extends Base
         $entries = [];
         foreach ($rows as $row) {
             $entries[] = [
+                'id' => (int) $row['id'],
                 'title' => $row['name'],
                 'url' => $this->helper->url->to('BoardViewController', 'show', ['project_id' => $row['id']]),
             ];

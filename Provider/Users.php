@@ -13,7 +13,7 @@ final class Users extends Base
 {
     public function search(array $user, string $term, ?string $cursor, int $limit): array
     {
-        $query = $this->db->table(UserModel::TABLE)->columns('id', 'username', 'name');
+        $query = $this->db->table(UserModel::TABLE)->columns('id', 'username', 'name')->eq('is_active', 1);
         if ($user['role'] !== Role::APP_ADMIN) {
             $projectIds = $this->projectPermissionModel->getActiveProjectIds($user['id']);
             if ($projectIds === []) {
@@ -38,6 +38,7 @@ final class Users extends Base
         $entries = [];
         foreach ($rows as $row) {
             $entries[] = [
+                'id' => (int) $row['id'],
                 'title' => $row['name'] ?: $row['username'],
                 'url' => $this->helper->url->to('UserViewController', 'profile', ['user_id' => $row['id']]),
             ];

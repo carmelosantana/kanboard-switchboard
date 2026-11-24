@@ -65,7 +65,7 @@ final class Providers extends Base
                 || !$this->nonEmptyString($entry['url'] ?? null)) {
                 continue;
             }
-            $entries[] = $descriptor['sensitive']
+            $normalized = $descriptor['sensitive']
                 ? ['title' => $entry['title'], 'url' => $entry['url']]
                 : [
                     'title' => $entry['title'],
@@ -73,6 +73,11 @@ final class Providers extends Base
                     'url' => $entry['url'],
                     'icon' => is_string($entry['icon'] ?? null) ? $entry['icon'] : '',
                 ];
+            $entryId = $entry['id'] ?? null;
+            if (!$descriptor['sensitive'] && (is_int($entryId) || $this->nonEmptyString($entryId))) {
+                $normalized['id'] = $entryId;
+            }
+            $entries[] = $normalized;
             if (count($entries) === $limit) {
                 break;
             }
