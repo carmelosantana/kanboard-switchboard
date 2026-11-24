@@ -2,6 +2,7 @@
 
 use Kanboard\Core\Http\Request;
 use Kanboard\Core\Plugin\Hook;
+use Kanboard\Core\Plugin\Loader;
 use Kanboard\Core\Security\Role;
 use Kanboard\Plugin\Switchboard\Model\Executor;
 use Kanboard\Plugin\Switchboard\Plugin;
@@ -19,6 +20,7 @@ final class ExecutorTest extends Base
     protected function setUp(): void
     {
         parent::setUp();
+        (new Loader($this->container))->loadSchema('Switchboard');
 
         $this->container['hook'] = new Hook();
         $this->container['request'] = new Request($this->container);
@@ -77,7 +79,7 @@ final class ExecutorTest extends Base
 
         $this->assertSame(['status' => 200, 'body' => self::TOAST], $this->execute(['value' => 'one', 'extra' => 'drop']));
         $this->assertSame(1, $this->calls);
-        $this->assertSame([['id' => self::ID, 'count' => 1, 'last' => $this->now]], $this->recentUses());
+        $this->assertSame([['command_id' => self::ID, 'count' => 1, 'last_used' => $this->now]], $this->recentUses());
     }
 
     public function testConsequentialCommandRequiresConfirmationBoundToInputUserAndExpiry(): void
@@ -105,7 +107,7 @@ final class ExecutorTest extends Base
         $this->assertSame(0, $this->calls);
         $this->assertSame(['status' => 200, 'body' => self::TOAST], $this->execute($input, $token));
         $this->assertSame(1, $this->calls);
-        $recorded = [['id' => self::ID, 'count' => 1, 'last' => $this->now]];
+        $recorded = [['command_id' => self::ID, 'count' => 1, 'last_used' => $this->now]];
         $this->assertSame($recorded, $this->recentUses());
         $this->now += 121;
         $this->assertSame($invalid, $this->execute($input, $token));
@@ -232,9 +234,10 @@ final class ExecutorTest extends Base
 
     private function recentUses(?int $userId = null): array
     {
-        $stored = $this->container['userMetadataModel']->get($userId ?? $this->user['id'], 'switchboard.recent', '[]');
-
-        return json_decode($stored, true);
+        return $this->container['db']->table('switchboard_recent')
+            ->eq('user_id', $userId ?? $this->user['id'])
+            ->columns('command_id', 'count', 'last_used')
+            ->findAll();
     }
 
     private function execute(array $input = [], ?string $token = null, ?array $user = null, array $ctx = []): array

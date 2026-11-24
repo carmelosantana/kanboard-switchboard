@@ -1,6 +1,7 @@
 <?php
 
 use Kanboard\Core\Plugin\Hook;
+use Kanboard\Core\Plugin\Loader;
 use Kanboard\Plugin\Switchboard\Model\Frecency;
 use Kanboard\Plugin\Switchboard\Plugin;
 use KanboardTests\units\Base;
@@ -17,6 +18,7 @@ final class FrecencyTest extends Base
     protected function setUp(): void
     {
         parent::setUp();
+        (new Loader($this->container))->loadSchema('Switchboard');
 
         $this->userId = $this->container['userModel']->create(['username' => 'frecency-user']);
         $this->frecency = new Frecency($this->container, fn(): int => $this->now);
@@ -37,7 +39,7 @@ final class FrecencyTest extends Base
         $this->frecency->record($this->userId, 'plugin.command');
 
         $this->assertSame([
-            ['id' => 'plugin.command', 'count' => 2, 'last' => $this->now],
+            ['command_id' => 'plugin.command', 'count' => 2, 'last_used' => $this->now],
         ], $this->storedEntries());
         $this->assertSame(['plugin.command' => 2.0], $this->frecency->scores($this->userId));
     }
@@ -70,7 +72,7 @@ final class FrecencyTest extends Base
         $this->assertCount(50, $this->storedEntries());
         $this->frecency->record($this->userId, 'plugin.newest');
 
-        $ids = array_column($this->storedEntries(), 'id');
+        $ids = array_column($this->storedEntries(), 'command_id');
         $this->assertCount(50, $ids);
         $this->assertContains('plugin.oldest', $ids);
         $this->assertContains('plugin.newest', $ids);
@@ -78,25 +80,49 @@ final class FrecencyTest extends Base
         $this->assertCount(8, $this->frecency->recent($this->userId));
     }
 
-    public function testCorruptJsonReadsAsEmptyAndTheNextRecordRepairsIt(): void
+    public function testCorruptLegacyMetadataIsRemovedAndTheNextRecordWorks(): void
     {
         $this->container['userMetadataModel']->save($this->userId, [self::KEY => '{']);
 
         $this->assertSame([], $this->frecency->scores($this->userId));
         $this->assertSame([], $this->frecency->recent($this->userId));
 
+        $this->assertFalse($this->container['userMetadataModel']->exists($this->userId, self::KEY));
         $this->frecency->record($this->userId, 'plugin.repaired');
 
         $this->assertSame([
-            ['id' => 'plugin.repaired', 'count' => 1, 'last' => $this->now],
+            ['command_id' => 'plugin.repaired', 'count' => 1, 'last_used' => $this->now],
         ], $this->storedEntries());
+    }
+
+    public function testFiftySixtyCharacterIdsRoundTrip(): void
+    {
+        $expected = [];
+        for ($index = 0; $index < 50; $index++) {
+            $id = sprintf('plugin.%051d%02d', 0, $index);
+            $expected[$id] = 1.0;
+            $this->frecency->record($this->userId, $id);
+        }
+
+        $this->assertCount(50, $this->storedEntries());
+        $this->assertEquals($expected, $this->frecency->scores($this->userId));
+    }
+
+    public function testOversizedCommandIdDoesNotPreventRecordingOtherCommands(): void
+    {
+        $this->frecency->record($this->userId, 'plugin.'.str_repeat('a', 185));
+        $this->frecency->record($this->userId, 'plugin.'.str_repeat('b', 184));
+
+        $this->assertSame(['plugin.'.str_repeat('b', 184)], $this->frecency->recent($this->userId));
     }
 
     public function testClearEmptiesRecentCommands(): void
     {
         $this->frecency->record($this->userId, 'plugin.command');
+        $this->container['userMetadataModel']->save($this->userId, [self::KEY => '[]']);
         $this->frecency->clear($this->userId);
 
+        $this->assertFalse($this->container['userMetadataModel']->exists($this->userId, self::KEY));
         $this->assertSame([], $this->frecency->scores($this->userId));
         $this->assertSame([], $this->storedEntries());
     }
@@ -117,6 +143,9 @@ final class FrecencyTest extends Base
 
     private function storedEntries(): array
     {
-        return json_decode($this->container['userMetadataModel']->get($this->userId, self::KEY, '[]'), true, flags: JSON_THROW_ON_ERROR);
+        return $this->container['db']->table('switchboard_recent')
+            ->eq('user_id', $this->userId)
+            ->columns('command_id', 'count', 'last_used')
+            ->findAll();
     }
 }

@@ -6,6 +6,7 @@ use Kanboard\Core\Controller\AccessForbiddenException;
 use Kanboard\Core\Http\Request;
 use Kanboard\Core\Http\Response;
 use Kanboard\Core\Plugin\Hook;
+use Kanboard\Core\Plugin\Loader;
 use Kanboard\Core\Security\Role;
 use Kanboard\Plugin\Switchboard\Controller\SwitchboardApiController;
 use Kanboard\Plugin\Switchboard\Plugin;
@@ -22,6 +23,7 @@ final class ApiControllerTest extends Base
     protected function setUp(): void
     {
         parent::setUp();
+        (new Loader($this->container))->loadSchema('Switchboard');
 
         $this->container['hook'] = new Hook();
         $this->container['logger'] = $this->createMock(LoggerInterface::class);
