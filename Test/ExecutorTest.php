@@ -203,6 +203,18 @@ final class ExecutorTest extends Base
         $this->assertSame([], $this->recentUses());
     }
 
+    /** The command already ran: a failure to record the use is logged, not reported as a failed command. */
+    public function testRecordingFailureAfterASuccessfulCommandStillReportsItsResult(): void
+    {
+        $this->register([]);
+        $this->container['db']->getConnection()->exec('DROP TABLE switchboard_recent');
+        $this->container['logger']->expects($this->once())->method('warning')
+            ->with($this->stringStartsWith('Switchboard: recording "test.command" failed ('));
+
+        $this->assertSame(['status' => 200, 'body' => self::TOAST], $this->execute());
+        $this->assertSame(1, $this->calls);
+    }
+
     public function testUnknownResultTypeFails(): void
     {
         $this->register(['target' => ['kind' => 'handler', 'handler' => static fn(): array => ['type' => 'weird']]]);

@@ -85,7 +85,12 @@ final class Executor extends Base
             return $this->commandFailed($id, get_class($error));
         }
 
-        (new Frecency($this->container, $this->clock))->record($user['id'], $id);
+        try {
+            (new Frecency($this->container, $this->clock))->record($user['id'], $id);
+        } catch (Throwable $error) {
+            // The command already ran; a lost recents entry must not report it as failed.
+            $this->logger->warning(sprintf('Switchboard: recording "%s" failed (%s)', $id, get_class($error)));
+        }
 
         return ['status' => 200, 'body' => $body];
     }
