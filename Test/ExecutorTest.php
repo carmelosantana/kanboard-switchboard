@@ -115,6 +115,21 @@ final class ExecutorTest extends Base
         $this->assertSame($secret, $this->container['configModel']->getOption('switchboard_secret'));
     }
 
+    public function testConfirmationIsBoundToTheProjectAndTaskContext(): void
+    {
+        $this->register(['risk' => 'consequential']);
+        $ctx = ['project_id' => 5, 'task_id' => 1];
+        $token = $this->execute(ctx: $ctx)['body']['confirm']['token'];
+        $invalid = ['status' => 409, 'body' => ['error' => 'invalid confirm']];
+
+        $this->assertSame($invalid, $this->execute(token: $token, ctx: ['task_id' => 2] + $ctx));
+        $this->assertSame($invalid, $this->execute(token: $token, ctx: ['project_id' => 6] + $ctx));
+        $this->assertSame(0, $this->calls);
+        $this->assertSame([], $this->recentUses());
+        $this->assertSame(['status' => 200, 'body' => self::TOAST], $this->execute(token: $token, ctx: $ctx));
+        $this->assertSame(1, $this->calls);
+    }
+
     public function testStepUpConsultsTheFirstAdapterBeforeConfirmation(): void
     {
         $this->register(['step_up' => true]);
@@ -124,7 +139,7 @@ final class ExecutorTest extends Base
             'step_up' => function (array $user) use (&$approved): array {
                 $this->assertSame($this->user, $user);
 
-                return ['ok' => $approved, 'url' => '/step-up'];
+                return $approved ? ['ok' => true] : ['ok' => false, 'url' => '/step-up'];
             },
         ]);
         $this->container['hook']->on('switchboard:host', [
@@ -146,6 +161,31 @@ final class ExecutorTest extends Base
         $this->assertArrayHasKey('confirm', $this->execute()['body']);
         $this->assertSame(0, $this->calls);
         $this->assertSame([], $this->recentUses());
+    }
+
+    /** @dataProvider invalidHostAdapters */
+    public function testInvalidHostAdapterReturnsGenericErrorAndLogsWarning(array $adapter): void
+    {
+        $this->register(['step_up' => true]);
+        $this->container['hook']->on('switchboard:host', $adapter);
+        $this->container['logger']->expects($this->once())->method('warning')
+            ->with('Switchboard: command "test.command" failed (InvalidHostAdapter)');
+
+        $this->assertSame(['status' => 500, 'body' => ['error' => 'command failed']], $this->execute());
+        $this->assertSame(0, $this->calls);
+        $this->assertSame([], $this->recentUses());
+    }
+
+    public static function invalidHostAdapters(): array
+    {
+        return [
+            'non-callable step-up' => [['step_up' => false]],
+            'missing URL when denied' => [['step_up' => static fn(): array => ['ok' => false]]],
+            'empty URL' => [['step_up' => static fn(): array => ['ok' => false, 'url' => '']]],
+            'non-string URL' => [['step_up' => static fn(): array => ['ok' => false, 'url' => 123]]],
+            'invalid URL when approved' => [['step_up' => static fn(): array => ['ok' => true, 'url' => null]]],
+            'missing decision' => [['step_up' => static fn(): array => ['url' => '/step-up']]],
+        ];
     }
 
     public function testHandlerExceptionReturnsGenericErrorAndLogsOnlyClass(): void
@@ -197,12 +237,12 @@ final class ExecutorTest extends Base
         return json_decode($stored, true);
     }
 
-    private function execute(array $input = [], ?string $token = null, ?array $user = null): array
+    private function execute(array $input = [], ?string $token = null, ?array $user = null, array $ctx = []): array
     {
         $user ??= $this->user;
         $executor = new Executor($this->container, fn(): int => $this->now);
 
-        return $executor->run($user, ['user_id' => $user['id']], self::ID, $input, $token);
+        return $executor->run($user, ['user_id' => $user['id']] + $ctx, self::ID, $input, $token);
     }
 
     private function register(array $descriptor): void

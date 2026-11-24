@@ -43,9 +43,20 @@ final class Executor extends Base
             if ($command['step_up']) {
                 $adapter = $this->hook->getListeners('switchboard:host')[0] ?? null;
                 if ($adapter !== null) {
+                    if (!is_array($adapter) || !is_callable($adapter['step_up'] ?? null)) {
+                        return $this->commandFailed($id, 'InvalidHostAdapter');
+                    }
                     $stepUp = $adapter['step_up']($user);
-                    if (($stepUp['ok'] ?? null) !== true) {
-                        return $this->error(428, 'step up required', ['url' => $stepUp['url'] ?? '']);
+                    if (!is_array($stepUp) || !is_bool($stepUp['ok'] ?? null)) {
+                        return $this->commandFailed($id, 'InvalidHostAdapter');
+                    }
+                    $url = $stepUp['url'] ?? null;
+                    if ((!$stepUp['ok'] || array_key_exists('url', $stepUp))
+                        && (!is_string($url) || trim($url) === '')) {
+                        return $this->commandFailed($id, 'InvalidHostAdapter');
+                    }
+                    if (!$stepUp['ok']) {
+                        return $this->error(428, 'step up required', ['url' => $url]);
                     }
                 }
             }
@@ -59,10 +70,10 @@ final class Executor extends Base
                     }
                     return [
                         'status' => 200,
-                        'body' => ['confirm' => ['message' => $message, 'token' => $tokens->issue($user['id'], $id, $input)]],
+                        'body' => ['confirm' => ['message' => $message, 'token' => $tokens->issue($user['id'], $id, $input, $ctx)]],
                     ];
                 }
-                if (!$tokens->verify($confirmToken, $user['id'], $id, $input)) {
+                if (!$tokens->verify($confirmToken, $user['id'], $id, $input, $ctx)) {
                     return $this->error(409, 'invalid confirm');
                 }
             }
@@ -71,9 +82,7 @@ final class Executor extends Base
                 ? $this->normalizeResult($command['target']['handler']($user, $ctx, $input))
                 : ['type' => 'navigate', 'url' => $registry->toClient($command)['url'] ?? null];
         } catch (Throwable $error) {
-            $this->logger->warning(sprintf('Switchboard: command "%s" failed (%s)', $id, get_class($error)));
-
-            return $this->error(500, 'command failed');
+            return $this->commandFailed($id, get_class($error));
         }
 
         (new Frecency($this->container, $this->clock))->record($user['id'], $id);
@@ -84,6 +93,13 @@ final class Executor extends Base
     private function error(int $status, string $code, array $details = []): array
     {
         return ['status' => $status, 'body' => ['error' => $code] + $details];
+    }
+
+    private function commandFailed(string $id, string $reason): array
+    {
+        $this->logger->warning(sprintf('Switchboard: command "%s" failed (%s)', $id, $reason));
+
+        return $this->error(500, 'command failed');
     }
 
     private function normalizeResult(array $result): array
