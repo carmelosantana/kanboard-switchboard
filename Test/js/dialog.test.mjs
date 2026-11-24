@@ -134,6 +134,31 @@ test('dialog and combobox are named, with a flat accessible list of options', as
     assert.equal(ui.options()[0].getAttribute('aria-label'), 'Alpha, Kanboard, opens page');
 });
 
+test('core command options show shortcut keys after the title and include them in their accessible names', async () => {
+    const ui = setup([ok([
+        {
+            id: 'switchboard.core.new-task',
+            title: 'New task',
+            group: 'Kanboard',
+            shortcut: 'n',
+            target: { kind: 'modal' },
+        },
+        {
+            id: 'switchboard.core.view-overview',
+            title: 'View overview',
+            group: 'Kanboard',
+            shortcut: 'v+o',
+            target: { kind: 'key', key: 'v+o' },
+        },
+    ])]);
+    await ui.open();
+    const [newTask, overview] = ui.options();
+    assert.equal(newTask.querySelector('kbd[data-slot=switchboard-shortcut]')?.textContent, 'n');
+    assert.equal(newTask.getAttribute('aria-label'), 'New task, Kanboard, shortcut n');
+    assert.equal(overview.querySelector('kbd[data-slot=switchboard-shortcut]')?.textContent, 'v o');
+    assert.equal(overview.getAttribute('aria-label'), 'View overview, Kanboard, shortcut v o');
+});
+
 test('ArrowDown, End, Home and ArrowUp move the active option', async () => {
     const ui = setup();
     await ui.open();

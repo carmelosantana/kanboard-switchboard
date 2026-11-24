@@ -159,6 +159,7 @@
             return [...quick, ...ranked].map(command => ({
                 title: command.title,
                 group: command.group,
+                shortcut: command.shortcut?.replaceAll('+', ' ').trim(),
                 leavesPage: command.target.kind === 'route',
                 action: event => activate(command, event, term),
             }));
@@ -187,15 +188,23 @@
                     group = groupId;
                     listbox.append(element('li', { role: 'presentation' }, group));
                 }
-                const label = [row.title, row.group, row.url || row.leavesPage ? 'opens page' : ''].filter(Boolean).join(', ');
+                const label = [
+                    row.title,
+                    row.group,
+                    row.url || row.leavesPage ? 'opens page' : '',
+                    row.shortcut ? 'shortcut ' + row.shortcut : '',
+                ].filter(Boolean).join(', ');
                 const option = element('li', {
                     id: 'switchboard-option-' + index,
                     role: 'option',
                     'aria-label': label,
                     'aria-selected': 'false',
-                }, row.url ? '' : row.title);
+                }, row.url ? '' : row.title + (row.shortcut ? ' ' : ''));
                 if (row.url) {
                     option.append(element('a', { href: row.url, tabindex: '-1' }, row.title));
+                }
+                if (row.shortcut) {
+                    option.append(element('kbd', { 'data-slot': 'switchboard-shortcut' }, row.shortcut));
                 }
                 if (row.action) {
                     option.addEventListener('click', event => {
