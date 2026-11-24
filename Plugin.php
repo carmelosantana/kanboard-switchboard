@@ -4,6 +4,7 @@ namespace Kanboard\Plugin\Switchboard;
 
 use Kanboard\Core\Plugin\Base;
 use Kanboard\Core\Security\Role;
+use Kanboard\Plugin\Switchboard\Model\Frecency;
 use Kanboard\Plugin\Switchboard\Model\Providers;
 use Kanboard\Plugin\Switchboard\Model\Registry;
 use Kanboard\Plugin\Switchboard\Provider\Projects;
@@ -20,6 +21,9 @@ class Plugin extends Base
         );
         $this->container['switchboardProviders'] = $this->container->factory(
             static fn(Container $c): Providers => new Providers($c)
+        );
+        $this->container['switchboardFrecency'] = $this->container->factory(
+            static fn(Container $c): Frecency => new Frecency($c)
         );
 
         $builtins = [
