@@ -7,7 +7,7 @@ use Kanboard\Core\Http\Request;
 use Kanboard\Core\Http\Response;
 use Kanboard\Core\Plugin\Hook;
 use Kanboard\Core\Security\Role;
-use Kanboard\Plugin\Switchboard\Controller\ApiController;
+use Kanboard\Plugin\Switchboard\Controller\SwitchboardApiController;
 use Kanboard\Plugin\Switchboard\Plugin;
 use KanboardTests\units\Base;
 use Psr\Log\LoggerInterface;
@@ -38,11 +38,11 @@ final class ApiControllerTest extends Base
         $routes = [
             'switchboard' => ['PageController', 'index'],
             'switchboard/confirm' => ['PageController', 'confirm'],
-            'switchboard/commands' => ['ApiController', 'commands'],
-            'switchboard/providers' => ['ApiController', 'providers'],
-            'switchboard/search' => ['ApiController', 'search'],
-            'switchboard/run' => ['ApiController', 'run'],
-            'switchboard/used' => ['ApiController', 'used'],
+            'switchboard/commands' => ['SwitchboardApiController', 'commands'],
+            'switchboard/providers' => ['SwitchboardApiController', 'providers'],
+            'switchboard/search' => ['SwitchboardApiController', 'search'],
+            'switchboard/run' => ['SwitchboardApiController', 'run'],
+            'switchboard/used' => ['SwitchboardApiController', 'used'],
             'switchboard/settings' => ['SettingsController', 'show'],
             'switchboard/settings/save' => ['SettingsController', 'save'],
             'switchboard/admin' => ['SettingsController', 'admin'],
@@ -50,6 +50,11 @@ final class ApiControllerTest extends Base
         ];
 
         foreach ($routes as $path => [$controller, $action]) {
+            $this->assertSame([
+                'controller' => $controller,
+                'action' => $action,
+                'plugin' => 'Switchboard',
+            ], $this->container['route']->findRoute($path));
             $this->assertSame($path, $this->container['route']->findUrl($controller, $action, ['plugin' => 'Switchboard']));
         }
     }
@@ -111,6 +116,40 @@ final class ApiControllerTest extends Base
             'action' => '',
             'plugin' => 'Example',
         ], $contexts[0]['route']);
+    }
+
+    public function testContextUsesTaskProjectForCommandPermission(): void
+    {
+        $projects = $this->container['projectModel'];
+        $memberProject = $projects->create(['name' => 'Member project']);
+        $viewerProject = $projects->create(['name' => 'Viewer project']);
+        $roles = $this->container['projectUserRoleModel'];
+        $this->assertTrue($roles->addUser($memberProject, $this->alice, Role::PROJECT_MEMBER));
+        $this->assertTrue($roles->addUser($viewerProject, $this->alice, Role::PROJECT_VIEWER));
+        $task = $this->container['taskCreationModel']->create(['project_id' => $viewerProject, 'title' => 'Viewer task']);
+        $this->assertGreaterThan(0, $task);
+
+        $context = null;
+        $this->container['hook']->on('switchboard:commands', static function (array $ctx) use (&$context): array {
+            $context = $ctx;
+
+            return [];
+        });
+        $this->command('example.member', Role::PROJECT_MEMBER);
+
+        $query = ['project_id' => (string) $memberProject];
+        [, $body] = $this->call('commands', $query);
+        $this->assertContains('example.member', array_column($body['commands'], 'id'));
+
+        $query['task_id'] = (string) $task;
+        [$status, $body] = $this->call('commands', $query);
+
+        $this->assertSame(200, $status);
+        $this->assertSame($task, $context['task_id']);
+        $this->assertSame($viewerProject, $context['project_id']);
+        $this->assertNotContains('example.member', array_column($body['commands'], 'id'));
+        $this->assertSame([403, ['error' => 'forbidden']], $this->call('run', $query, ['id' => 'example.member']));
+        $this->assertSame(0, $this->handlerCalls);
     }
 
     public function testProvidersOmitsSensitiveProviderWithoutItsPrefix(): void
@@ -237,7 +276,7 @@ final class ApiControllerTest extends Base
         });
         $this->container['response'] = $response;
 
-        (new ApiController($this->container))->$action();
+        (new SwitchboardApiController($this->container))->$action();
 
         return $result;
     }

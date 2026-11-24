@@ -20,8 +20,11 @@ final class Context
         }
         if ($taskId !== null) {
             $task = $c['taskFinderModel']->getById($taskId);
-            if (!$task || !$c['projectPermissionModel']->isUserAllowed((int) $task['project_id'], $userId)) {
+            $taskProjectId = $task ? (int) $task['project_id'] : null;
+            if ($taskProjectId === null || !$c['projectPermissionModel']->isUserAllowed($taskProjectId, $userId)) {
                 $taskId = null;
+            } else {
+                $projectId = $taskProjectId;
             }
         }
 

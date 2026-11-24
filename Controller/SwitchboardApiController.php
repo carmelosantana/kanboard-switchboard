@@ -9,7 +9,7 @@ use Kanboard\Plugin\Switchboard\Model\ProviderFailed;
 use Kanboard\Plugin\Switchboard\Model\UnknownProvider;
 use stdClass;
 
-final class ApiController extends BaseController
+final class SwitchboardApiController extends BaseController
 {
     public function commands(): void
     {
