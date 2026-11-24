@@ -57,13 +57,29 @@ async function searchUI(commands, fetch, config = {}) {
         timers.advance(ms);
         await settle();
     };
-    return { options, results, type, key, tick, settle, requests, searchRequests };
+    const headers = () => dialog.querySelectorAll('li[role=presentation]').map(header => header.textContent);
+    return { headers, options, results, type, key, tick, settle, requests, searchRequests };
 }
 
 function setup(search, commands = []) {
     return searchUI(commands, (url, options) => url.pathname === '/providers'
         ? reply({ providers }) : search(url, options), { 'data-project-id': '12', 'data-from-plugin': 'Example' });
 }
+
+test('search groups use the provider title and fall back to the id when the title is missing', async () => {
+    for (const [provider, label] of [
+        [providers[0], 'Tasks'],
+        [{ id: 'switchboard.tasks', prefix: '#' }, 'switchboard.tasks'],
+    ]) {
+        const ui = await searchUI([], url => url.pathname === '/providers'
+            ? reply({ providers: [provider] }) : page('Task A'));
+        ui.type('#task');
+        await ui.tick(250);
+
+        assert.deepEqual(ui.headers(), [label]);
+        assert.equal(ui.options()[0].getAttribute('aria-label'), `Task A, opens page, ${label}`);
+    }
+});
 
 test('debounces typing, fans out the latest term and aborts outstanding requests on the next query', async () => {
     const ui = await setup(() => new Promise(() => {}));

@@ -147,7 +147,8 @@
                     const batch = search;
                     options.push({ title: 'Load more', action: () => loadMore(batch, group) });
                 }
-                return options.map(option => ({ ...option, group: provider.title, groupId: provider.id }));
+                const title = provider.title ?? provider.id;
+                return options.map(option => ({ ...option, group: title, groupId: provider.id }));
             });
         }
 
@@ -179,20 +180,21 @@
                     results = [...(mode === 'search' ? [] : commandRows(term)), ...searchRows()];
                 }
             }
-            let group;
+            let previousGroupId;
             listbox.replaceChildren();
             const previous = preserveSelection ? selection : -1;
             rows = results.map((row, index) => {
                 const groupId = row.groupId ?? row.group;
-                if (row.group && groupId !== group) {
-                    group = groupId;
-                    listbox.append(element('li', { role: 'presentation' }, group));
+                if (row.group && groupId !== previousGroupId) {
+                    previousGroupId = groupId;
+                    listbox.append(element('li', { role: 'presentation' }, row.group));
                 }
                 const label = [
                     row.title,
-                    row.group,
+                    row.groupId ? '' : row.group,
                     row.url || row.leavesPage ? 'opens page' : '',
                     row.shortcut ? 'shortcut ' + row.shortcut : '',
+                    row.groupId ? row.group : '',
                 ].filter(Boolean).join(', ');
                 const option = element('li', {
                     id: 'switchboard-option-' + index,
