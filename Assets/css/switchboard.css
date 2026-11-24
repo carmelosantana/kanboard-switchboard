@@ -1,12 +1,11 @@
 dialog[data-slot=switchboard],
 a[data-slot=switchboard-trigger],
 [data-slot=switchboard-toast] {
-    --switchboard-surface: hsl(var(--popover, 0 0% 100%));
-    --switchboard-text: hsl(var(--foreground, 222 47% 11%));
-    --switchboard-muted: hsl(var(--muted-foreground, 215 16% 47%));
-    --switchboard-border: hsl(var(--border, 214 32% 91%));
-    --switchboard-ring: hsl(var(--ring, 222 84% 5%));
-    --switchboard-highlight: hsl(var(--highlight, var(--accent, 210 40% 96%)));
+    --switchboard-surface: var(--popover, #ffffff);
+    --switchboard-text: var(--foreground, #0f172a);
+    --switchboard-muted: var(--muted-foreground, #64748b);
+    --switchboard-border: var(--border, #e2e8f0);
+    --switchboard-highlight: var(--highlight, var(--accent, #f1f5f9));
 
     box-sizing: border-box;
     border: 1px solid var(--switchboard-border);
@@ -31,7 +30,7 @@ dialog[data-slot=switchboard][open] {
 }
 
 dialog[data-slot=switchboard]::backdrop {
-    background: hsl(0 0% 0% / .4);
+    background: rgb(0 0 0 / .4);
 }
 
 html:has(dialog[data-slot=switchboard][open]) {
@@ -57,14 +56,13 @@ dialog[data-slot=switchboard] input[role=combobox] {
 }
 
 dialog[data-slot=switchboard] input[role=combobox]::placeholder,
-dialog[data-slot=switchboard] [role=presentation],
 dialog[data-slot=switchboard] > p {
     color: var(--switchboard-muted);
 }
 
 dialog[data-slot=switchboard] :focus-visible,
 a[data-slot=switchboard-trigger]:focus-visible {
-    outline: 2px solid var(--switchboard-ring);
+    outline: 2px solid var(--ring, #0f172a);
     outline-offset: 2px;
 }
 
@@ -81,12 +79,17 @@ dialog[data-slot=switchboard] > p:empty {
     margin: 0;
 }
 
-dialog[data-slot=switchboard] [role=presentation] {
+dialog[data-slot=switchboard] li[role=presentation] {
     padding: .5rem .75rem .25rem;
-    font-size: .875rem;
+    color: var(--switchboard-muted);
+    font-size: .75rem;
+    text-transform: uppercase;
 }
 
 dialog[data-slot=switchboard] [role=option] {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
     padding: .5rem .75rem;
     border-radius: .25rem;
 }
@@ -99,9 +102,21 @@ dialog[data-slot=switchboard] [role=option] a {
     color: inherit;
 }
 
+dialog[data-slot=switchboard] kbd[data-slot=switchboard-shortcut] {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: .125rem .375rem;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: .25rem;
+    color: var(--switchboard-muted);
+    font-family: monospace;
+    font-size: .75rem;
+    white-space: nowrap;
+}
+
 dialog[data-slot=switchboard] [role=option][aria-selected=true] {
     background: var(--switchboard-highlight);
-    box-shadow: inset 3px 0 0 var(--switchboard-ring);
+    box-shadow: inset 3px 0 0 var(--ring, #0f172a);
 }
 
 [data-slot=switchboard-status] {

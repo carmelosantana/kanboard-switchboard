@@ -22,15 +22,29 @@ final class AssetsTest extends TestCase
     {
         $css = $this->stylesheet();
         foreach ([
-            'hsl(var(--popover, 0 0% 100%))',
-            'hsl(var(--foreground, 222 47% 11%))',
-            'hsl(var(--muted-foreground, 215 16% 47%))',
-            'hsl(var(--border, 214 32% 91%))',
-            'hsl(var(--ring, 222 84% 5%))',
-            'hsl(var(--highlight, var(--accent, 210 40% 96%)))',
+            'var(--popover, #ffffff)',
+            'var(--foreground, #0f172a)',
+            'var(--muted-foreground, #64748b)',
+            'var(--border, #e2e8f0)',
+            'var(--ring, #0f172a)',
+            'var(--highlight, var(--accent, #f1f5f9))',
         ] as $color) {
             $this->assertStringContainsString($color, $css);
         }
+    }
+
+    public function testStylesheetAcceptsFullColorTokens(): void
+    {
+        $this->assertStringNotContainsStringIgnoringCase('hsl(var(', $this->stylesheet());
+    }
+
+    public function testStylesheetStylesGroupedOptionsAndShortcutHints(): void
+    {
+        $css = $this->stylesheet();
+
+        $this->assertMatchesRegularExpression('/li\[role=presentation\]\s*\{[^}]*text-transform:\s*uppercase\s*;/', $css);
+        $this->assertMatchesRegularExpression('/\[role=option\]\s*\{[^}]*display:\s*flex\s*;/', $css);
+        $this->assertMatchesRegularExpression('/kbd\[data-slot=switchboard-shortcut\]\s*\{[^}]*margin-left:\s*auto\s*;/', $css);
     }
 
     public function testMotionRequiresNoReducedMotionPreference(): void
