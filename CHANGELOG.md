@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1 — 2026-11-24
+## 1.0.1 — 2026-11-25
 
 - A command that ran is no longer reported as failed when recording it in recents fails; the error is logged.
 - `%`, `_` and `!` in task, project and user search terms match literally.
